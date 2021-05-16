@@ -1,4 +1,4 @@
-import type { FireApi, QueryConstaint } from '@ngfire/webworker';
+import type { FireApi, ConstraintParams } from '@ngfire/webworker';
 import type { limit, where } from 'firebase/firestore';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -7,7 +7,7 @@ import * as comlink from 'comlink';
 type API = comlink.Remote<FireApi>;
 
 class ConstraintRef {
-  query: QueryConstaint[] = [];
+  query: ConstraintParams[] = [];
   where(...payload: Parameters<typeof where>) {
     this.query.push({ type: 'where', payload });
     return this;
@@ -24,7 +24,8 @@ type QueryFn = (ref: ConstraintRef) => ConstraintRef;
 export class Firestore {
   db: API['firestore'];
   constructor() {
-    const worker = new Worker('./firebase/firebase.worker', { type: 'module' });
+    const path = new URL('./firebase/firebase.worker', import.meta.url);
+    const worker = new Worker(path, { type: 'module' });
     const firebase = comlink.wrap<FireApi>(worker);
     this.db = firebase.firestore;
   }

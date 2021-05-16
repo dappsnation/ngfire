@@ -53,7 +53,9 @@ function generateUUID() {
     .join("-");
 }
 
-
+///////////
+// QUERY //
+///////////
 const factory = { where, limit };
 type Constraint = typeof factory;
 type ConstraintKeys = keyof Constraint;
@@ -74,6 +76,11 @@ function getQuery(params: ConstraintParams[]) {
     return;
   }).filter(exist);
 }
+
+
+//////////
+// API  //
+//////////
 
 export const api = {
   firestore: comlink.proxy({
