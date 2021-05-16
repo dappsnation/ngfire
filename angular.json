@@ -25,7 +25,8 @@
     "@nrwl/angular:library": {
       "style": "scss",
       "linter": "eslint",
-      "unitTestRunner": "jest"
+      "unitTestRunner": "jest",
+      "strict": true
     },
     "@nrwl/angular:component": {
       "style": "scss"
@@ -52,7 +53,8 @@
               "apps/playground/src/assets"
             ],
             "styles": ["apps/playground/src/styles.scss"],
-            "scripts": []
+            "scripts": [],
+            "webWorkerTsConfig": "apps/playground/tsconfig.worker.json"
           },
           "configurations": {
             "production": {
@@ -64,8 +66,8 @@
               ],
               "optimization": true,
               "outputHashing": "all",
-              "sourceMap": false,
-              "namedChunks": false,
+              "sourceMap": true,
+              "namedChunks": true,
               "extractLicenses": true,
               "vendorChunk": false,
               "buildOptimizer": true,
@@ -107,6 +109,9 @@
             "lintFilePatterns": [
               "apps/playground/src/**/*.ts",
               "apps/playground/src/**/*.html"
+            ],
+            "tsConfig": [
+              "apps/playground/tsconfig.worker.json"
             ]
           }
         },
@@ -142,6 +147,43 @@
           "builder": "@nrwl/linter:eslint",
           "options": {
             "lintFilePatterns": ["apps/playground-e2e/**/*.{js,ts}"]
+          }
+        }
+      }
+    },
+    "webworker": {
+      "projectType": "library",
+      "root": "libs/webworker",
+      "sourceRoot": "libs/webworker/src",
+      "prefix": "ngfire",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/angular:package",
+          "options": {
+            "tsConfig": "libs/webworker/tsconfig.lib.json",
+            "project": "libs/webworker/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "libs/webworker/tsconfig.lib.prod.json"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "libs/webworker/src/**/*.ts",
+              "libs/webworker/src/**/*.html"
+            ]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/webworker"],
+          "options": {
+            "jestConfig": "libs/webworker/jest.config.js",
+            "passWithNoTests": true
           }
         }
       }

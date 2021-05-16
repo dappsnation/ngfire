@@ -1,0 +1,20 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      // Should implement commented rules when outside of emulators
+      match /{uid}/avatar/{filename} {
+        allow write: if true; // if request.resource.metadata.uid == request.auth.uid;
+  			allow read: if true;
+      }
+      match /{uid}/products/{filename} {
+        allow write: if true; // if request.resource.metadata.uid == request.auth.uid;
+  			allow read: if true;
+      }
+      match /{uid}/seller/{filename} {
+        allow write: if true; // request.resource.metadata.uid == request.auth.uid;
+  			allow read: if true;
+      }
+    }
+  }
+}

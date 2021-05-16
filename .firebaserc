@@ -1,0 +1,12 @@
+{
+  "targets": {
+    "dev-kampoy": {
+      "hosting": {
+        "playground": ["dev-kampoy"]
+      }
+    }
+  },
+  "projects": {
+    "default": "dev-kampoy"
+  }
+}
