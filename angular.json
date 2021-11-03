@@ -1,37 +1,5 @@
 {
   "version": 1,
-  "cli": {
-    "defaultCollection": "@nrwl/angular"
-  },
-  "defaultProject": "playground",
-  "schematics": {
-    "@nrwl/angular": {
-      "application": {
-        "linter": "eslint"
-      },
-      "library": {
-        "linter": "eslint"
-      },
-      "storybook-configuration": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/angular:application": {
-      "style": "scss",
-      "linter": "eslint",
-      "unitTestRunner": "jest",
-      "e2eTestRunner": "cypress"
-    },
-    "@nrwl/angular:library": {
-      "style": "scss",
-      "linter": "eslint",
-      "unitTestRunner": "jest",
-      "strict": true
-    },
-    "@nrwl/angular:component": {
-      "style": "scss"
-    }
-  },
   "projects": {
     "playground": {
       "projectType": "application",
@@ -51,9 +19,7 @@
               "apps/playground/src/favicon.ico",
               "apps/playground/src/assets"
             ],
-            "styles": [
-              "apps/playground/src/styles.scss"
-            ],
+            "styles": ["apps/playground/src/styles.scss"],
             "scripts": [],
             "webWorkerTsConfig": "apps/playground/tsconfig.worker.json",
             "vendorChunk": true,
@@ -115,22 +81,20 @@
               "apps/playground/src/**/*.ts",
               "apps/playground/src/**/*.html"
             ],
-            "tsConfig": [
-              "apps/playground/tsconfig.worker.json"
-            ]
-          }
+            "tsConfig": ["apps/playground/tsconfig.worker.json"]
+          },
+          "outputs": ["{options.outputFile}"]
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/apps/playground"
-          ],
+          "outputs": ["coverage/apps/playground"],
           "options": {
             "jestConfig": "apps/playground/jest.config.js",
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
     },
     "playground-e2e": {
       "root": "apps/playground-e2e",
@@ -153,12 +117,13 @@
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": [
-              "apps/playground-e2e/**/*.{js,ts}"
-            ]
-          }
+            "lintFilePatterns": ["apps/playground-e2e/**/*.{js,ts}"]
+          },
+          "outputs": ["{options.outputFile}"]
         }
-      }
+      },
+      "tags": [],
+      "implicitDependencies": ["playground"]
     },
     "webworker": {
       "projectType": "library",
@@ -185,19 +150,19 @@
               "libs/webworker/src/**/*.ts",
               "libs/webworker/src/**/*.html"
             ]
-          }
+          },
+          "outputs": ["{options.outputFile}"]
         },
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/libs/webworker"
-          ],
+          "outputs": ["coverage/libs/webworker"],
           "options": {
             "jestConfig": "libs/webworker/jest.config.js",
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
     }
   }
 }

@@ -1,3 +1,9 @@
+const { getJestProjects } = require('@nrwl/jest');
+
 module.exports = {
-  projects: ['<rootDir>/apps/playground', '<rootDir>/libs/webworker'],
+  projects: [
+    ...getJestProjects(),
+    '<rootDir>/apps/playground',
+    '<rootDir>/libs/webworker',
+  ],
 };
