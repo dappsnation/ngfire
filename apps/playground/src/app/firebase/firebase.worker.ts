@@ -1,11 +1,12 @@
 /// <reference lib="webworker" />
-import { startApp } from '@ngfire/webworker';
+import { startApp, useFirestore, useFirestoreEmulator, useAuthEmulator, useAuth } from '@ngfire/webworker';
 import { environment } from '../../environments/environment';
 
 startApp({
-  firebase: environment.firebase,
-  firestore: {
-    useEmulator: 'localhost:8000',
-    enablePersistence: true
-  }
-});
+  firestore: useFirestore({
+    useEmulator: useFirestoreEmulator('localhost:8000')
+  }),
+  // auth: useAuth({
+  //   useEmulator: useAuthEmulator('localhost:9099')
+  // })
+}, environment.firebase);

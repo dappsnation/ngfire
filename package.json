@@ -40,7 +40,7 @@
     "@angular/router": "^12.0.0",
     "@nrwl/angular": "12.3.3",
     "comlink": "^4.3.0",
-    "firebase": "^9.0.0-beta.2",
+    "firebase": "^9.0.0-beta.3",
     "rxjs": "~6.6.3",
     "tslib": "^2.0.0",
     "zone.js": "~0.11.4"
