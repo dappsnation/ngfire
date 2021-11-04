@@ -1,5 +1,4 @@
 import { InjectionToken, ModuleWithProviders, NgModule } from '@angular/core';
-import { FireAuth } from './auth.service';
 import * as comlink from 'comlink';
 
 const FIREBASE_WORKER = new InjectionToken<string>('FIREBASE_WORKER');
@@ -10,7 +9,7 @@ function initworker(url: string) {
 }
 
 @NgModule({
-  providers: [FireAuth]
+  providers: []
 })
 export class FirebaseModule {
   static worker(url: string): ModuleWithProviders<FirebaseModule> {

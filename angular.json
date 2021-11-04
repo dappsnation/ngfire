@@ -1,6 +1,48 @@
 {
   "version": 1,
   "projects": {
+    "ngfire": {
+      "projectType": "library",
+      "root": "libs/ngfire",
+      "sourceRoot": "libs/ngfire/src",
+      "prefix": "ngfire",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/angular:package",
+          "outputs": ["dist/libs/ngfire"],
+          "options": {
+            "project": "libs/ngfire/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "libs/ngfire/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "libs/ngfire/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/ngfire"],
+          "options": {
+            "jestConfig": "libs/ngfire/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "libs/ngfire/src/**/*.ts",
+              "libs/ngfire/src/**/*.html"
+            ]
+          }
+        }
+      },
+      "tags": []
+    },
     "playground": {
       "projectType": "application",
       "root": "apps/playground",

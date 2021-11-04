@@ -19,7 +19,8 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@ngfire/webworker": ["libs/webworker/src/index.ts"]
+      "@ngfire/webworker": ["libs/webworker/src/index.ts"],
+      "ngfire": ["libs/ngfire/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
