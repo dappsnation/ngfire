@@ -2,15 +2,32 @@
 // `ng build --prod` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 
+import { Firestore, connectFirestoreEmulator } from "firebase/firestore";
+import { Auth, connectAuthEmulator } from "firebase/auth";
+import { FirebaseStorage, connectStorageEmulator } from "firebase/storage";
+import { Functions, connectFunctionsEmulator } from "firebase/functions";
+
 export const environment = {
   production: false,
   firebase: {
-    apiKey: "AIzaSyBIPN0Lymv_ra0sBIyanV27CYmw0li0_2M",
-    authDomain: "dev-kampoy.firebaseapp.com",
-    projectId: "dev-kampoy",
-    storageBucket: "dev-kampoy.appspot.com",
-    messagingSenderId: "621929258406",
-    appId: "1:621929258406:web:86fdcdde3b045304718367",
+    options: {
+      projectId: 'demo-firebase',
+      apiKey: 'abcd',
+      authDomain: 'demo-firebase.firebaseapp.com',
+      storageBucket: 'default-bucket',
+    },
+    firestore: (firestore: Firestore) => {
+      connectFirestoreEmulator(firestore, 'localhost', 8000);
+    },
+    auth: (auth: Auth) => {
+      connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+    },
+    storage: (storage: FirebaseStorage) => {
+      connectStorageEmulator(storage, "localhost", 9199);
+    },
+    functions: (functions: Functions) => {
+      connectFunctionsEmulator(functions, "localhost", 5001);
+    }
   },
   useEmulators: true
 };

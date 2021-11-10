@@ -1,4 +1,4 @@
-import type { ConstraintParams, FirestoreApi, QueryOptions } from '@ngfire/webworker';
+import type { ConstraintParams, FirestoreApi, QueryOptions } from './firestore';
 import type { limit, where } from 'firebase/firestore';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';

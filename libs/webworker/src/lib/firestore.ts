@@ -1,4 +1,4 @@
-import { Unsubscribe, enableIndexedDbPersistence, FirebaseFirestore, FirestoreDataConverter, DocumentReference, CollectionReference, QueryDocumentSnapshot, SnapshotOptions } from "firebase/firestore";
+import { Unsubscribe, enableIndexedDbPersistence, Firestore, FirestoreDataConverter, DocumentReference, CollectionReference, QueryDocumentSnapshot, SnapshotOptions } from "firebase/firestore";
 import { collection, query, doc, getDoc, getDocs, getFirestore, onSnapshot, setDoc, useFirestoreEmulator } from "firebase/firestore";
 // QueryConstraint
 import { startAt, startAfter, endAt, where, limit, limitToLast, orderBy } from "firebase/firestore";
@@ -12,7 +12,7 @@ interface FirestoreConfig {
   enablePersistence?: typeof enableIndexedDbPersistence;
 }
 
-let _firestore: FirebaseFirestore;
+let _firestore: Firestore;
 let _config: FirestoreConfig;
 
 async function _getFirestore() {
