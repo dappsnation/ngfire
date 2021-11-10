@@ -1,5 +1,5 @@
 import { inject, Injectable, InjectFlags, InjectionToken } from "@angular/core";
-import { FIREBASE_CONFIG, REGION_OR_DOMAIN } from "./config";
+import { getConfig, REGION_OR_DOMAIN } from "./config";
 import { initializeApp } from "firebase/app";
 import { getFunctions, Functions, httpsCallable, HttpsCallable, HttpsCallableOptions } from "firebase/functions";
 
@@ -8,10 +8,10 @@ export const CLOUD_FUNCTIONS = new InjectionToken<() => Functions>('Firebase clo
   factory: () => {
     let functions: Functions;
     const regionOrDomain = inject(REGION_OR_DOMAIN, InjectFlags.Optional);
-    const config = inject(FIREBASE_CONFIG);
-    const app = initializeApp(config.options, config.options.appId);
+    const config = getConfig();
     return () => {
       if (!functions) {
+        const app = initializeApp(config.options, config.options.appId);
         functions = getFunctions(app, regionOrDomain ?? undefined);
         if (config.functions) config.functions(functions);
       }

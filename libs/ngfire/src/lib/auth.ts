@@ -1,6 +1,6 @@
 import { inject, Injectable, InjectionToken, NgZone, PLATFORM_ID } from "@angular/core";
 import { Auth, getAuth, UserCredential, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, signInAnonymously, signInWithPopup, signInWithCustomToken, AuthProvider, User, getAdditionalUserInfo } from "firebase/auth";
-import { FIREBASE_CONFIG } from "./config";
+import { getConfig } from "./config";
 import { initializeApp } from "firebase/app";
 import { FIRESTORE } from "./firestore";
 import { filter, map, switchMap, take } from "rxjs/operators";
@@ -18,8 +18,8 @@ const exist = <T>(v?: T | null): v is T => v !== null && v !== undefined;
 export const FIRE_AUTH = new InjectionToken<() => Auth>('Fire auth instance', {
   providedIn: 'root',
   factory: () => {
-    const config = inject(FIREBASE_CONFIG);
     let auth: Auth;
+    const config = getConfig();
     return () => {
       if (!auth) {
         const app = initializeApp(config.options, config.options.appId);
