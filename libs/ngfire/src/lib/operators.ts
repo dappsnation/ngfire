@@ -179,7 +179,10 @@ export function joinWith<T, Query extends QueryMap<T>>(queries: Query, options: 
     }
     if (!obs.length) return of(entity);
     return combineLatest(obs).pipe(
-      map(() => entity as any),
+      map(() => {
+        if (!entity) return entity;
+        return JSON.parse(JSON.stringify(entity)) as any
+      }),
     );
   }
 
