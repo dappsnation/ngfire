@@ -1,6 +1,6 @@
 import { inject, NgZone, PLATFORM_ID } from '@angular/core';
 import { Observable, of, combineLatest, from } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map, startWith, tap } from 'rxjs/operators';
 import { FIRESTORE } from './firestore';
 import { writeBatch, runTransaction, doc, collection, Query, getDocs, getDoc, query, queryEqual, Timestamp, Transaction, DocumentSnapshot } from 'firebase/firestore';
 import type { DocumentData, CollectionReference, DocumentReference, QueryConstraint, QueryDocumentSnapshot, QuerySnapshot, WriteBatch, UpdateData } from 'firebase/firestore';
@@ -46,7 +46,9 @@ export function isIdList(idsOrQuery: any[]): idsOrQuery is string[] {
 function isQuery<E>(ref: CollectionReference<E> | DocumentReference<E> | Query<E>): ref is Query<E> {
   return ref.type === 'query';
 }
-
+function isCollectionRef<E>(ref: CollectionReference<E> | DocumentReference<E> | Query<E>): ref is CollectionReference<E> {
+  return ref.type === 'collection';
+}
 
 ///////////////////
 // GROUP HELPERS //
@@ -93,6 +95,7 @@ export function assertPath(path: string) {
 /////////////
 
 export abstract class FireCollection<E extends DocumentData> {
+  private cacheDoc: Record<string, DocumentSnapshot<E>> = {};
   private memoPath: Record<string, Observable<DocumentSnapshot<E> | QuerySnapshot<E>>> = {};
   private memoQuery: Map<Query, Observable<QuerySnapshot<E>>> = new Map();
   private getFirestore = inject(FIRESTORE);
@@ -116,21 +119,39 @@ export abstract class FireCollection<E extends DocumentData> {
   protected useMemo(
     ref: CollectionReference<E> | DocumentReference<E> | Query<E>
   ): Observable<DocumentSnapshot<E> | QuerySnapshot<E>> {
+    // Collection
+    if (isCollectionRef(ref)) {
+      if (!this.memorize) return fromRef(ref);
+      const path = ref.path;
+      if (!this.memoPath[path]) {
+        this.memoPath[path] = fromRef(ref).pipe(
+          tap(snap => snap.docs.forEach(doc => this.cacheDoc[doc.ref.path] = doc)),
+          shareWithDelay(),
+        );
+      }
+      return this.memoPath[path];
+    }
+    // Query
     if (isQuery(ref)) {
       if (!this.memorize) return fromRef(ref);
       for (const query of this.memoQuery.keys()) {
         if (queryEqual(query, ref)) return this.memoQuery.get(query)!;
       }
-      this.memoQuery.set(ref, fromRef(ref).pipe(shareWithDelay()));
+      this.memoQuery.set(ref, fromRef(ref).pipe(
+        tap(snap => snap.docs.forEach(doc => this.cacheDoc[doc.ref.path] = doc)),
+        shareWithDelay(),
+      ));
       return this.memoQuery.get(ref)!;
-    } else {
-      if (!this.memorize) return fromRef(ref);
-      const path = ref.path;
-      if (!this.memoPath[path]) {
-        this.memoPath[path] = fromRef(ref).pipe(shareWithDelay());
-      }
-      return this.memoPath[path];
     }
+    // Document
+    const path = ref.path;
+    if (!this.memoPath[path]) {
+      const cache = this.cacheDoc[path];
+      this.memoPath[path] = cache
+       ? fromRef(ref).pipe(shareWithDelay(), startWith(cache))
+       : fromRef(ref).pipe(shareWithDelay());
+    }
+    return this.memoPath[path];
   }
 
   /** Function triggered when adding/updating data to firestore */
