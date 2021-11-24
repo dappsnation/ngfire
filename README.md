@@ -1,105 +1,117 @@
+# ngfire
+Unofficial library for angular & firebase.
 
+## Setup
 
-# Ngfire
+### _Prerequirement_
+Install firebase & firebase-tools: 
+```
+npm install -D firebase-tools
+npm install firebase
+```
 
-This project was generated using [Nx](https://nx.dev).
+Initialize your firebase project: 
+```
+npx firebase init
+```
 
-<p style="text-align: center;"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="450"></p>
+### Setup the lib
+Install the lib
+```
+npm install ngfire
+```
 
-🔎 **Powerful, Extensible Dev Tools**
+Add the firebase config
 
-## Quick Start & Documentation
+`environment.ts` (use emulator) : 
+```typescript
+export const environment = {
+  production: false,
+  firebase: {
+    options: {
+      projectId: 'demo-firebase',
+      apiKey: 'demo',
+      authDomain: 'demo-firebase.firebaseapp.com',
+      storageBucket: 'default-bucket',
+    },
+    firestore: (firestore: Firestore) => {
+      connectFirestoreEmulator(firestore, 'localhost', 8000);
+    },
+    auth: (auth: Auth) => {
+      connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+    },
+    storage: (storage: FirebaseStorage) => {
+      connectStorageEmulator(storage, "localhost", 9199);
+    },
+    functions: (functions: Functions) => {
+      connectFunctionsEmulator(functions, "localhost", 5001);
+    }
+  },
+}
+```
 
-[Nx Documentation](https://nx.dev/angular)
+`environment.prod.ts` : 
+```typescript
+export const environment = {
+  production: false,
+  firebase: {
+    options: {
+      apiKey: '******',
+      authDomain: '******',
+      projectId: '******',
+      storageBucket: '******',
+      messagingSenderId: '******',
+      appId: '******',
+      measurementId: '******',
+    }
+  },
+}
+```
 
-[10-minute video showing all Nx features](https://nx.dev/angular/getting-started/what-is-nx)
+Connect with angular: 
+`app.module.ts`:
+```typescript
+...
+import { FIREBASE_CONFIG } from 'ngfire';
+import { environment } from '../environments/environment';
 
-[Interactive Tutorial](https://nx.dev/angular/tutorial/01-create-application)
+@NgModule({
+  declarations: [AppComponent],
+  imports: [BrowserModule, ReactiveFormsModule],
+  providers: [{ provide: FIREBASE_CONFIG, useValue: environment.firebase }],
+  bootstrap: [AppComponent],
+})
+export class AppModule {}
+```
 
-## Adding capabilities to your workspace
+## CollectionService
+You can create a new service per collection of Firestore:
 
-Nx supports many plugins which add capabilities for developing different types of applications and different tools.
+`flight.service.ts`: 
+```typescript
+import { Injectable } from '@angular/core';
+import { FireCollection } from 'ngfire';
 
-These capabilities include generating applications, libraries, etc as well as the devtools to test, and build projects as well.
+export interface Flight {
+  number: string;
+  info: string;
+}
 
-Below are our core plugins:
+@Injectable({ providedIn: 'root' })
+export class FlightService extends FireCollection<Flight> {
+  // Collection path
+  readonly path = 'flights';
+  // Memorize all requests that has been done
+  memorize = true;
+}
+```
 
-- [Angular](https://angular.io)
-  - `ng add @nrwl/angular`
-- [React](https://reactjs.org)
-  - `ng add @nrwl/react`
-- Web (no framework frontends)
-  - `ng add @nrwl/web`
-- [Nest](https://nestjs.com)
-  - `ng add @nrwl/nest`
-- [Express](https://expressjs.com)
-  - `ng add @nrwl/express`
-- [Node](https://nodejs.org)
-  - `ng add @nrwl/node`
-
-There are also many [community plugins](https://nx.dev/nx-community) you could add.
-
-## Generate an application
-
-Run `ng g @nrwl/angular:app my-app` to generate an application.
-
-> You can use any of the plugins above to generate applications as well.
-
-When using Nx, you can create multiple applications and libraries in the same workspace.
-
-## Generate a library
-
-Run `ng g @nrwl/angular:lib my-lib` to generate a library.
-
-> You can also use any of the plugins above to generate libraries as well.
-
-Libraries are shareable across libraries and applications. They can be imported from `@ngfire/mylib`.
-
-## Development server
-
-Run `ng serve my-app` for a dev server. Navigate to http://localhost:4200/. The app will automatically reload if you change any of the source files.
-
-## Code scaffolding
-
-Run `ng g component my-component --project=my-app` to generate a new component.
-
-## Build
-
-Run `ng build my-app` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
-
-## Running unit tests
-
-Run `ng test my-app` to execute the unit tests via [Jest](https://jestjs.io).
-
-Run `nx affected:test` to execute the unit tests affected by a change.
-
-## Running end-to-end tests
-
-Run `ng e2e my-app` to execute the end-to-end tests via [Cypress](https://www.cypress.io).
-
-Run `nx affected:e2e` to execute the end-to-end tests affected by a change.
-
-## Understand your workspace
-
-Run `nx dep-graph` to see a diagram of the dependencies of your projects.
-
-## Further help
-
-Visit the [Nx Documentation](https://nx.dev/angular) to learn more.
-
-
-
-
-
-
-## ☁ Nx Cloud
-
-### Computation Memoization in the Cloud
-
-<p style="text-align: center;"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-cloud-card.png"></p>
-
-Nx Cloud pairs with Nx in order to enable you to build and test code more rapidly, by up to 10 times. Even teams that are new to Nx can connect to Nx Cloud and start saving time instantly.
-
-Teams using Nx gain the advantage of building full-stack applications with their preferred framework alongside Nx’s advanced code generation and project dependency graph, plus a unified experience for both frontend and backend developers.
-
-Visit [Nx Cloud](https://nx.app/) to learn more.
+The service exposes an API to do most of common tasks: 
+- `valueChanges`: returns an `Observable`
+- `load`: returns a `Promise` using the cache if available
+- `getValue`: returns a `Promise` without using the cache
+- `add`: adds a new documet to the collection
+- `update`: update an existing document to the collection
+- `upsert`: add or update a document
+- `remove`: remove a document from the collection
+- `removeAll`: remove all documents from a collection
