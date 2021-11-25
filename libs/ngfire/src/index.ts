@@ -7,3 +7,4 @@ export * from './lib/operators';
 export * from './lib/storage';
 export * from './lib/sub-collection';
 export * from './lib/types';
+export * from './lib/config';
