@@ -5,9 +5,8 @@ import { FIRESTORE } from './firestore';
 import { writeBatch, runTransaction, doc, collection, Query, getDocs, getDoc, query, queryEqual, Timestamp, Transaction, DocumentSnapshot } from 'firebase/firestore';
 import type { DocumentData, CollectionReference, DocumentReference, QueryConstraint, QueryDocumentSnapshot, QuerySnapshot, WriteBatch, UpdateData } from 'firebase/firestore';
 import { shareWithDelay, fromRef } from './operators';
-import { WriteOptions, UpdateCallback, MetaDocument } from './types';
+import { WriteOptions, UpdateCallback, MetaDocument, Params } from './types';
 
-import { Params } from '@angular/router';
 import { isPlatformServer } from '@angular/common';
 import { keepUnstableUntilFirst } from './zone';
 
