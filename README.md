@@ -106,6 +106,42 @@ export class FlightService extends FireCollection<Flight> {
 }
 ```
 
+And use it in the component
+`app.component.ts`: 
+```typescript
+@Component({
+  selector: 'ngfire-root',
+  template: `
+    <ul>
+      <li *ngFor="let flight of flight$ | async">
+        {{ flight.number }}: {{ flight.info }}
+      </li>
+    </ul>
+
+    <form [formGroup]="form" (ngSubmit)="add()">
+      <input formControlName="number" />
+      <textarea formControlName="info"></textarea>
+      <button>Submit</button>
+    </form>
+  `,
+})
+export class AppComponent {
+  form = new FormGroup({
+    number: new FormControl(),
+    info: new FormControl()
+  });
+  flight$ = this.service.valueChanges();
+
+  constructor(private service: FlightService) {}
+
+  add() {
+    this.service.add(this.form.value);
+  }
+}
+```
+
+## API
+
 The service exposes an API to do most of common tasks: 
 - `valueChanges`: returns an `Observable`
 - `load`: returns a `Promise` using the cache if available
