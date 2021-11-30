@@ -21,7 +21,7 @@ export const CLOUD_FUNCTIONS = new InjectionToken<() => Functions>('Firebase clo
 });
 
 @Injectable({ providedIn: 'root' })
-export class CallbableFunctions {
+export class CallableFunctions {
   private getFunctions = inject(CLOUD_FUNCTIONS);
   private callables: Record<string, HttpsCallable> = {};
 
