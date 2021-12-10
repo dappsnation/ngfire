@@ -1,6 +1,6 @@
 import { inject, NgZone, PLATFORM_ID } from '@angular/core';
 import { Observable, of, combineLatest, from } from 'rxjs';
-import { map, startWith, tap } from 'rxjs/operators';
+import { map, startWith, take, tap } from 'rxjs/operators';
 import { FIRESTORE } from './firestore';
 import { writeBatch, runTransaction, doc, collection, Query, getDocs, getDoc, query, queryEqual, Timestamp, Transaction, DocumentSnapshot, FieldValue } from 'firebase/firestore';
 import type { DocumentData, CollectionReference, DocumentReference, QueryConstraint, QueryDocumentSnapshot, QuerySnapshot, WriteBatch, UpdateData } from 'firebase/firestore';
@@ -276,6 +276,19 @@ export abstract class FireCollection<E extends DocumentData> {
     return collection(this.db, path) as CollectionReference<E>;
   }
 
+  
+  /** Get the last content from the app (if value has been cached, it won't do a server request) */
+  public async load(ids?: string[]): Promise<E[]>;
+  public async load(query?: QueryConstraint[]): Promise<E[]>;
+  public async load(id?: string | null): Promise<E | undefined>;
+  public async load(
+    idOrQuery?: string | string[] | QueryConstraint[] | null,
+  ): Promise<E | E[] | undefined> {
+    if (idOrQuery === null) return;
+    if (arguments.length && typeof idOrQuery === 'undefined') return;
+    // Force type to work
+    return this.valueChanges(idOrQuery as any).pipe(take(1)).toPromise() as any;
+  }
 
   /** Return the current value of the path from Firestore */
   public async getValue(ids?: string[]): Promise<E[]>;
