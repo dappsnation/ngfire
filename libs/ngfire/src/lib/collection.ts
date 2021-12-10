@@ -2,10 +2,10 @@ import { inject, NgZone, PLATFORM_ID } from '@angular/core';
 import { Observable, of, combineLatest, from } from 'rxjs';
 import { map, startWith, tap } from 'rxjs/operators';
 import { FIRESTORE } from './firestore';
-import { writeBatch, runTransaction, doc, collection, Query, getDocs, getDoc, query, queryEqual, Timestamp, Transaction, DocumentSnapshot } from 'firebase/firestore';
+import { writeBatch, runTransaction, doc, collection, Query, getDocs, getDoc, query, queryEqual, Timestamp, Transaction, DocumentSnapshot, FieldValue } from 'firebase/firestore';
 import type { DocumentData, CollectionReference, DocumentReference, QueryConstraint, QueryDocumentSnapshot, QuerySnapshot, WriteBatch, UpdateData } from 'firebase/firestore';
 import { shareWithDelay, fromRef } from './operators';
-import { WriteOptions, UpdateCallback, MetaDocument, Params } from './types';
+import { WriteOptions, UpdateCallback, MetaDocument, Params, FireEntity, DeepKeys } from './types';
 
 import { isPlatformServer } from '@angular/common';
 import { keepUnstableUntilFirst } from './zone';
@@ -101,11 +101,11 @@ export abstract class FireCollection<E extends DocumentData> {
   private platformId = inject(PLATFORM_ID);
   private zone = inject(NgZone);
   protected abstract readonly path: string;
-  protected idKey = 'id';
+  protected idKey: DeepKeys<E> = 'id' as any;
   protected memorize = false;
 
   protected onCreate?(entity: E, options: WriteOptions): any;
-  protected onUpdate?(entity: Partial<E>, options: WriteOptions): any;
+  protected onUpdate?(entity: FireEntity<E>, options: WriteOptions): any;
   protected onDelete?(id: string, options: WriteOptions): any;
 
 
@@ -154,13 +154,13 @@ export abstract class FireCollection<E extends DocumentData> {
   }
 
   /** Function triggered when adding/updating data to firestore */
-  protected toFirestore(entity: Partial<E>, actionType: 'add' | 'update'): any | Promise<any> {
-    const _meta: MetaDocument = entity['_meta'] ?? {
-      createdAt: new Date(),
-      modifiedAt: new Date(),
-    };
-    _meta['modifiedAt'] = new Date();
-    return { _meta, ...entity };
+  protected toFirestore(entity: FireEntity<E>, actionType: 'add' | 'update'): any | Promise<any> {
+    if (actionType === 'add') {
+      const _meta: MetaDocument = { createdAt: new Date(), modifiedAt: new Date() };
+      return { _meta, ...entity };
+    } else {
+      return { '_meta.modifiedAt': new Date(), ...entity };
+    }
   }
 
   /** Function triggered when getting data from firestore */
@@ -171,7 +171,6 @@ export abstract class FireCollection<E extends DocumentData> {
       return undefined;
     }
   }
-
 
   batch() {
     return writeBatch(this.db);
@@ -315,15 +314,15 @@ export abstract class FireCollection<E extends DocumentData> {
    * @param documents One or many documents
    * @param options options to write the document on firestore
    */
-  upsert(documents: Partial<E>, options?: WriteOptions): Promise<string>;
-  upsert(documents: Partial<E>[], options?: WriteOptions): Promise<string[]>;
+  upsert(documents: FireEntity<E>, options?: WriteOptions): Promise<string>;
+  upsert(documents: FireEntity<E>[], options?: WriteOptions): Promise<string[]>;
   async upsert(
-    documents: Partial<E> | Partial<E>[],
+    documents: FireEntity<E> | FireEntity<E>[],
     options: WriteOptions = {}
   ): Promise<string | string[]> {
-    const doesExist = async (doc: Partial<E>) => {
-      const id: string | undefined = doc[this.idKey];
-      if (!id) return false;
+    const doesExist = async (doc: FireEntity<E>) => {
+      const id: string | FieldValue | undefined = doc[this.idKey];
+      if (typeof id !== 'string') return false;
       const ref = this.getRef(id, options.params);
       const { exists } = (options.write instanceof Transaction)
         ? await options.write?.get(ref)
@@ -336,8 +335,8 @@ export abstract class FireCollection<E extends DocumentData> {
         : this.add(documents, options);
     }
 
-    const toAdd: Partial<E>[] = [];
-    const toUpdate: Partial<E>[] = [];
+    const toAdd: FireEntity<E>[] = [];
+    const toUpdate: FireEntity<E>[] = [];
     for (const doc of documents) {
       (await doesExist(doc)) ? toUpdate.push(doc) : toAdd.push(doc);
     }
@@ -352,17 +351,17 @@ export abstract class FireCollection<E extends DocumentData> {
    * @param docs A document or a list of document
    * @param options options to write the document on firestore
    */
-  add(documents: Partial<E>, options?: WriteOptions): Promise<string>;
-  add(documents: Partial<E>[], options?: WriteOptions): Promise<string[]>;
+  add(documents: FireEntity<E>, options?: WriteOptions): Promise<string>;
+  add(documents: FireEntity<E>[], options?: WriteOptions): Promise<string[]>;
   async add(
-    documents: Partial<E> | Partial<E>[],
+    documents: FireEntity<E> | FireEntity<E>[],
     options: WriteOptions = {}
   ): Promise<string | string[]> {
     const docs = Array.isArray(documents) ? documents : [documents];
     const { write = this.batch(), ctx } = options;
     const operations = docs.map(async (value) => {
-      const id = value[this.idKey] || this.createId();
-      const data = await this.toFirestore({ ...value, [this.idKey]: id }, 'add');
+      const id = (value[this.idKey] as string | undefined) || this.createId();
+      const data = await this.toFirestore(value, 'add');
       const ref = this.getRef(id, options.params);
       (write as WriteBatch).set(ref, data);
       if (this.onCreate) {
@@ -412,26 +411,26 @@ export abstract class FireCollection<E extends DocumentData> {
   /**
    * Update one or several document in Firestore
    */
-  update(entity: Partial<E> | Partial<E>[], options?: WriteOptions): Promise<void>;
-  update(id: string | string[], entityChanges: Partial<E>, options?: WriteOptions): Promise<void>;
+  update(entity: FireEntity<E> | FireEntity<E>[], options?: WriteOptions): Promise<void>;
+  update(id: string | string[], entityChanges: FireEntity<E>, options?: WriteOptions): Promise<void>;
   update(
     ids: string | string[],
     stateFunction: UpdateCallback<E>,
     options?: WriteOptions
   ): Promise<Transaction[]>;
   async update(
-    idsOrEntity: Partial<E> | Partial<E>[] | string | string[],
-    stateFnOrWrite?: UpdateCallback<E> | Partial<E> | WriteOptions,
+    idsOrEntity: FireEntity<E> | FireEntity<E>[] | string | string[],
+    stateFnOrWrite?: UpdateCallback<E> | FireEntity<E> | WriteOptions,
     options: WriteOptions = {}
   ): Promise<void | Transaction[]> {
     let ids: string[] = [];
     let stateFunction: UpdateCallback<E> | undefined;
-    let getData: (docId: string) => Partial<E>;
+    let getData: (docId: string) => FireEntity<E>;
 
-    const isEntity = (value: DocumentData | string): value is Partial<E> => {
+    const isEntity = (value: DocumentData | string): value is FireEntity<E> => {
       return typeof value === 'object' && value[this.idKey];
     };
-    const isEntityArray = (values: DocumentData | string[] | string): values is Partial<E>[] => {
+    const isEntityArray = (values: DocumentData | string[] | string): values is FireEntity<E>[] => {
       return Array.isArray(values) && values.every((value) => isEntity(value));
     };
 
@@ -451,7 +450,7 @@ export abstract class FireCollection<E extends DocumentData> {
       stateFunction = stateFnOrWrite as UpdateCallback<E>;
     } else if (typeof stateFnOrWrite === 'object') {
       ids = Array.isArray(idsOrEntity) ? idsOrEntity : [idsOrEntity];
-      getData = () => stateFnOrWrite as Partial<E>;
+      getData = () => stateFnOrWrite as FireEntity<E>;
     } else {
       throw new Error('Passed parameters match none of the function signatures.');
     }

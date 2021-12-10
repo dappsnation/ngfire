@@ -101,6 +101,10 @@ export interface Flight {
 export class FlightService extends FireCollection<Flight> {
   // Collection path
   readonly path = 'flights';
+
+  // Key used to get the id (default: "id")
+  readonly idKey = 'id';
+
   // Memorize all requests that has been done
   memorize = true;
 }
@@ -151,3 +155,108 @@ The service exposes an API to do most of common tasks:
 - `upsert`: add or update a document
 - `remove`: remove a document from the collection
 - `removeAll`: remove all documents from a collection
+
+
+### valueChanges
+
+```typescript
+service.valueChanges(); // All document of the collection
+service.valueChanges('id'); // Documents with id "id"
+service.valueChanges([ '1', '2' ]); // Two documents with the ids specified
+service.valueChanges([ where('key', '==', value) ]); // All documents where "key" is value
+```
+
+### load
+```typescript
+service.load();
+service.load('id');
+service.load([ '1', '2' ]);
+service.load([ where('key', '==', value) ]);
+```
+
+### getValue
+```typescript
+service.getValue();
+service.getValue('id');
+service.getValue([ '1', '2' ]);
+service.getValue([ where('key', '==', value) ]);
+```
+
+### add
+```typescript
+const id = await service.add({  });
+const ids = await service.add([{  }, {  }]);
+```
+
+### update
+```typescript
+// Implicit id: idKey specified in the service should be in the document to update
+await service.update({ id: '1', list: arrayUnion(42) });
+await service.update([ { id: '1', age: 42 }, { id: '2', age: 24 } ]);
+
+// Explicit id: 
+await service.update('1', { list: arrayUnion(42) });
+await service.update(['1', '2'], { name: 42 }); // each document is updated the same way
+
+// Transaction
+await service.update('1', (doc, tx) => ({ age: doc.age + 1 }));
+await service.update(['1', '2'], (doc, tx) => ({ age: doc.age + 1 }));
+```
+
+### upsert
+```typescript
+const id = await service.upsert({ id: '1', list: arrayUnion(42) })
+const ids = await service.upsert([
+  { id: '1', age: 42 }, // If document exist in firestore: fallbacks to `add`
+  { age: 24 },          // No id provided: fallbacks to `update`
+])
+```
+
+### remove
+```typescript
+await service.remove('1');
+await service.remove(['1', '2']);
+```
+
+### removeAll
+```typescript
+await service.removeAll();
+```
+
+## Batch & Transaction
+Every write operation (`add`, `upsert`, `update`, `remove`, `removeAll`) support the `write` options for batches & transactions.
+
+### Batch
+This snippet will create a document and add the id to the `members` map of the other document with status "pending".
+If one of the write operation fails, both fail.
+```typescript
+const batch = service.batch();
+const id = await service.add({ age: 42 }, { write: batch });
+await service.update('1', { `members.${id}`: 'pending' }, { write: batch })
+await batch.commit();
+```
+
+### Transaction
+Regular transaction:
+```typescript
+service.runTransaction(async (tx) => {
+  const ref = service.getRef('1');
+  const data = await tx.get(ref).then(snap => snap.data());
+  return service.update('1', { age: data.age + 1 }, { write: tx });
+})
+```
+
+Update transaction: 
+```typescript
+// Simple increment
+service.update('1', doc => ({ age: doc.age + 1 }));
+
+// Trigger side effect safely
+service.update('id1', (doc, tx) => {
+  const newAge = doc.age + 1;
+  if (newAge > 25) {
+    service.update('id2', { 'members.id1': deleteField() }, { write: tx });
+  }
+  return { age: newAge };
+});
+```
