@@ -67,6 +67,29 @@ export abstract class FireSubCollection<E> extends FireCollection<E> {
     return this.getFromRef(ref);
   }
 
+  /** Clear cache and get the latest value into the cache */
+  public async reload(ids?: string[], params?: Params): Promise<E[]>;
+  public async reload(params: Params): Promise<E[]>;
+  public async reload(query?: QueryConstraint[], params?: Params): Promise<E[]>;
+  public async reload(id?: string | null, params?: Params): Promise<E | undefined>;
+  public async reload(
+    idOrQuery?: null | string | string[] | QueryConstraint[] | Params,
+    params?: Params
+  ): Promise<E | E[] | undefined> {
+    if (!this.memorize) return;
+    if (!idOrQuery) return;
+    const isGroupQuery = arguments.length === 1 && Array.isArray(idOrQuery) && !isIdList(idOrQuery);
+    const ref = isGroupQuery
+      ? this.getGroupRef(idOrQuery)
+      : this.getRef(idOrQuery as any, params);
+    
+    Array.isArray(ref)
+      ? ref.forEach(r => this.clearCache(r))
+      : this.clearCache(ref);
+    return this.load(idOrQuery as any, params);
+  }
+  
+
   /** Get the last content from the app (if value has been cached, it won't do a server request)  */
   public load(ids?: string[], params?: Params): Promise<E[]>;
   public load(params: Params): Promise<E[]>;
@@ -95,7 +118,7 @@ export abstract class FireSubCollection<E> extends FireCollection<E> {
     const isGroupQuery = arguments.length === 1 && Array.isArray(idOrQuery) && !isIdList(idOrQuery);
     if (isEmpty || isGroupQuery) {
       const ref = this.getGroupRef(idOrQuery as undefined | QueryConstraint[]);
-      return this.useMemo(ref).pipe(map(snaps => this.snapToData(snaps)));
+      return this.useCache(ref).pipe(map(snaps => this.snapToData(snaps)));
     }
 
     // If array is empty

@@ -113,9 +113,9 @@ export abstract class FireCollection<E extends DocumentData> {
     return this.getFirestore();
   }
 
-  protected useMemo(ref: DocumentReference<E>): Observable<DocumentSnapshot<E>>
-  protected useMemo(ref: CollectionReference<E> | Query<E>): Observable<QuerySnapshot<E>>
-  protected useMemo(
+  protected useCache(ref: DocumentReference<E>): Observable<DocumentSnapshot<E>>
+  protected useCache(ref: CollectionReference<E> | Query<E>): Observable<QuerySnapshot<E>>
+  protected useCache(
     ref: CollectionReference<E> | DocumentReference<E> | Query<E>
   ): Observable<DocumentSnapshot<E> | QuerySnapshot<E>> {
     // Collection
@@ -151,6 +151,18 @@ export abstract class FireCollection<E extends DocumentData> {
        : fromRef(ref).pipe(shareWithDelay());
     }
     return this.memoPath[path];
+  }
+
+  protected clearCache(ref?: CollectionReference<E> | DocumentReference<E> | Query<E>) {
+    // If no arguments are provided, clear everything
+    if (!arguments.length) {
+      this.memoPath = {};
+      this.memoQuery.clear();
+    }
+    if (!ref) return;
+    isQuery(ref)
+      ? this.memoQuery.delete(ref)
+      : delete this.memoPath[ref.path];
   }
 
   /** Function triggered when adding/updating data to firestore */
@@ -220,10 +232,10 @@ export abstract class FireCollection<E extends DocumentData> {
     }
     if (Array.isArray(ref)) {
       if (!ref.length) return of([]);
-      const queries = ref.map(r => this.useMemo(r));
+      const queries = ref.map(r => this.useCache(r));
       return combineLatest(queries).pipe(map(snaps => this.snapToData(snaps)));
     } else {
-      return this.useMemo(ref as any).pipe(map(snaps => this.snapToData(snaps)));
+      return this.useCache(ref as any).pipe(map(snaps => this.snapToData(snaps)));
     }
   }
 
@@ -277,6 +289,23 @@ export abstract class FireCollection<E extends DocumentData> {
   }
 
   
+  /** Clear cache and get the latest value into the cache */
+  public async reload(ids?: string[]): Promise<E[]>;
+  public async reload(query?: QueryConstraint[]): Promise<E[]>;
+  public async reload(id?: string | null): Promise<E | undefined>;
+  public async reload(
+    idOrQuery?: string | string[] | QueryConstraint[] | null,
+  ): Promise<E | E[] | undefined> {
+    if (!this.memorize) return;
+    // We do not support full clearCache with reload
+    if (!idOrQuery) return;
+    const ref = this.getRef(idOrQuery as any);
+    Array.isArray(ref)
+      ? ref.forEach(r => this.clearCache(r))
+      : this.clearCache(ref);
+    return this.load(idOrQuery as any);
+  }
+
   /** Get the last content from the app (if value has been cached, it won't do a server request) */
   public async load(ids?: string[]): Promise<E[]>;
   public async load(query?: QueryConstraint[]): Promise<E[]>;

@@ -1,6 +1,6 @@
 {
   "name": "ngfire",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "homepage": "https://github.com/dappsnation/ngfire",
   "peerDependencies": {
     "@angular/common": "^12.2.0",
