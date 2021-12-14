@@ -101,7 +101,7 @@ export abstract class FireAuth<Profile, Roles = undefined> {
   
   /**
    * Observe current user. Doesn't emit if there are no user connected.
-   * Use `user` if you need to know is user is connected
+   * Use `user` if you need to know if user is connected
    */
   currentUser$ = this.user$.pipe(filter(exist));
 

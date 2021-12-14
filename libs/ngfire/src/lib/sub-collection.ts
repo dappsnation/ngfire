@@ -3,7 +3,7 @@ import type { QueryDocumentSnapshot, DocumentSnapshot, Query, QueryConstraint } 
 import { FireCollection, isIdList, toDate } from "./collection";
 import { Params } from './types'
 import { Observable, of } from "rxjs";
-import { map } from "rxjs/operators";
+import { map, take } from "rxjs/operators";
 
 
 /** Get the params from a path */
@@ -67,6 +67,19 @@ export abstract class FireSubCollection<E> extends FireCollection<E> {
     return this.getFromRef(ref);
   }
 
+  /** Get the last content from the app (if value has been cached, it won't do a server request)  */
+  public load(ids?: string[], params?: Params): Promise<E[]>;
+  public load(params: Params): Promise<E[]>;
+  public load(query?: QueryConstraint[], params?: Params): Promise<E[]>;
+  public load(id?: string | null, params?: Params): Promise<E | undefined>;
+  public load(
+    idOrQuery?: null | string | string[] | QueryConstraint[] | Params,
+    params?: Params
+  ): Promise<E | E[] | undefined> {
+    if (arguments.length === 0) return this.valueChanges().pipe(take(1)).toPromise();
+    if (arguments.length === 1) return this.valueChanges(idOrQuery as any).pipe(take(1)).toPromise();
+    return this.valueChanges(idOrQuery as any, params).pipe(take(1)).toPromise();
+  }
 
   /** Return the current value of the path from Firestore */
   public valueChanges(ids?: string[], params?: Params): Observable<E[]>;
