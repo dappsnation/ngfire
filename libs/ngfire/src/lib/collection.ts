@@ -143,6 +143,7 @@ export abstract class FireCollection<E extends DocumentData> {
       return this.memoQuery.get(ref)!;
     }
     // Document
+    if (!this.memorize) return fromRef(ref);
     const path = ref.path;
     if (!this.memoPath[path]) {
       const cache = this.cacheDoc[path];
@@ -153,16 +154,20 @@ export abstract class FireCollection<E extends DocumentData> {
     return this.memoPath[path];
   }
 
-  protected clearCache(ref?: CollectionReference<E> | DocumentReference<E> | Query<E>) {
+  protected clearCache(refs?: CollectionReference<E> | DocumentReference<E> | Query<E> | DocumentReference<E>[]) {
     // If no arguments are provided, clear everything
     if (!arguments.length) {
       this.memoPath = {};
       this.memoQuery.clear();
     }
-    if (!ref) return;
-    isQuery(ref)
-      ? this.memoQuery.delete(ref)
-      : delete this.memoPath[ref.path];
+    if (!refs) return;
+    if (Array.isArray(refs)) {
+      refs.forEach(ref => delete this.memoPath[ref.path]);
+    } else if (isQuery(refs)) {
+      this.memoQuery.delete(refs);
+    } else {
+      delete this.memoPath[refs.path];
+    }
   }
 
   /** Function triggered when adding/updating data to firestore */
@@ -300,9 +305,8 @@ export abstract class FireCollection<E extends DocumentData> {
     // We do not support full clearCache with reload
     if (!idOrQuery) return;
     const ref = this.getRef(idOrQuery as any);
-    Array.isArray(ref)
-      ? ref.forEach(r => this.clearCache(r))
-      : this.clearCache(ref);
+    if (!ref) return;
+    this.clearCache(ref);
     return this.load(idOrQuery as any);
   }
 
@@ -427,18 +431,20 @@ export abstract class FireCollection<E extends DocumentData> {
   async remove(id: string | string[], options: WriteOptions = {}) {
     const { write = this.batch(), ctx } = options;
     const ids: string[] = Array.isArray(id) ? id : [id];
-
+    const refs: DocumentReference<E>[] = [];
     const operations = ids.map(async (docId) => {
       const ref = this.getRef(docId, options.params);
       write.delete(ref);
       if (this.onDelete) {
         await this.onDelete(docId, { write, ctx });
       }
+      refs.push(ref);
     });
     await Promise.all(operations);
     // If there is no atomic write provided
     if (!options.write) {
-      return (write as WriteBatch).commit();
+      await (write as WriteBatch).commit();
+      if (this.memorize) this.clearCache(refs);
     }
   }
 
@@ -447,7 +453,8 @@ export abstract class FireCollection<E extends DocumentData> {
     const ref = options.params ? this.getRef(options.params) : this.getRef();
     const snapshot = await getDocs(ref);
     const ids = snapshot.docs.map((doc) => doc.id);
-    return this.remove(ids, options);
+    await this.remove(ids, options);
+    if (this.memorize) this.clearCache(ref);
   }
 
   /**
@@ -504,9 +511,12 @@ export abstract class FireCollection<E extends DocumentData> {
 
     // If update depends on the entity, use transaction
     if (stateFunction) {
-      return runTransaction(this.db, async (tx) => {
+      let refs: DocumentReference<E>[] = [];
+      await runTransaction(this.db, async (tx) => {
+        refs = [];
         const operations = ids.map(async (id) => {
           const ref = this.getRef(id, options.params);
+          refs.push(ref);
           const snapshot = await tx.get(ref);
           const doc = this.fromFirestore(snapshot);
           if (doc && stateFunction) {
@@ -521,16 +531,17 @@ export abstract class FireCollection<E extends DocumentData> {
         });
         return Promise.all(operations);
       });
+      if (this.memorize) this.clearCache(refs);
     } else {
       const { write = this.batch() } = options;
+      const refs: DocumentReference<E>[] = [];
       const operations = ids.map(async (docId) => {
         const doc = Object.freeze(getData(docId));
         if (!docId) {
-          throw new Error(
-            `Document should have an unique id to be updated, but none was found in ${doc}`
-          );
+          throw new Error(`Document should have an unique id to be updated, but none was found in ${doc}`);
         }
         const ref = this.getRef(docId, options.params);
+        refs.push(ref);
         const data = await this.toFirestore(doc, 'update');
         (write as WriteBatch).update(ref, data);
         if (this.onUpdate) {
@@ -540,9 +551,9 @@ export abstract class FireCollection<E extends DocumentData> {
       await Promise.all(operations);
       // If there is no atomic write provided
       if (!options.write) {
-        return (write as WriteBatch).commit();
+        await (write as WriteBatch).commit();
+        if (this.memorize) this.clearCache(refs)
       }
-      return;
     }
   }
 }
