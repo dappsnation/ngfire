@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "../../dist/out-tsc",
+    "target": "esnext",
+    "module": "commonjs",
+    "declaration": false,
+    "declarationMap": false,
+    "inlineSources": false,
+    "sourceMap": false,
+    "types": [],
+    "lib": []
+  },
+  "include": [
+    "schematics/index.ts",
+    "schematics/*/index.ts",
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "ngfire-ng-add",
+  "title": "ngfire ng-add",
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "string",
+      "description": "The name of the project.",
+      "$default": {
+        "$source": "projectName"
+      }
+    },
+    "firebaseProject": {
+      "type": "string",
+      "description": "The name of the firebase project (default is demo-project).",
+      "x-prompt": "Name of your firebase project (default is demo-project)"
+    },
+    "path": {
+      "type": "string",
+      "description": "Optional path where to generate the files (default is the root workspace)"
+    }
+  },
+  "required": []
+}

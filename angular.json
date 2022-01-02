@@ -43,6 +43,35 @@
       },
       "tags": []
     },
+    "ngfire-schematics": {
+      "projectType": "library",
+      "root": "libs/ngfire/schematics",
+      "sourceRoot": "libs/ngfire/schematics",
+      "prefix": "ngfire",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/workspace:tsc",
+          "options": {
+            "outputPath": "dist/libs/ngfire/schematics",
+            "tsConfig": "libs/ngfire/tsconfig.schematics.json",
+            "main": "libs/ngfire/schematics/index.ts",
+            "assets": [
+              "libs/ngfire/schematics/collection.json",
+              {
+                "glob": "*/schema.json",
+                "input": "libs/ngfire/schematics",
+                "output": "/"
+              },
+              {
+                "glob": "**/files/{*,.*}",
+                "input": "libs/ngfire/schematics",
+                "output": "/"
+              }
+            ]
+          }
+        }
+      }
+    },
     "playground": {
       "projectType": "application",
       "root": "apps/playground",
