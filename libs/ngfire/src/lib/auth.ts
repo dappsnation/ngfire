@@ -8,7 +8,7 @@ import { doc, getDoc, writeBatch, runTransaction } from "firebase/firestore";
 import type { WriteBatch, DocumentSnapshot, DocumentReference, UpdateData } from 'firebase/firestore';
 import { user, fromRef } from './operators';
 import { from, Observable, of } from "rxjs";
-import { AtomicWrite, UpdateCallback } from "./types";
+import { AtomicWrite, MetaDocument, UpdateCallback } from "./types";
 import { shareWithDelay } from "./operators";
 import { isPlatformServer } from "@angular/common";
 import { keepUnstableUntilFirst } from "./zone";
@@ -159,8 +159,13 @@ export abstract class FireAuth<Profile, Roles = undefined> {
    * Function triggered when adding/updating data to firestore
    * @note should be overwritten
    */
-  protected toFirestore(profile: Partial<Profile>): any {
-    return profile;
+  protected toFirestore(profile: Partial<Profile>, actionType: 'add' | 'update'): any {
+    if (actionType === 'add') {
+      const _meta: MetaDocument = { createdAt: new Date(), modifiedAt: new Date() };
+      return { _meta, ...profile };
+    } else {
+      return { '_meta.modifiedAt': new Date(), ...profile };
+    }
   }
 
   /**
@@ -236,14 +241,14 @@ export abstract class FireAuth<Profile, Roles = undefined> {
         if (!doc) {
           throw new Error(`Could not find document at "${this.path}/${snapshot.id}"`);
         }
-        const data = await profile(this.toFirestore(doc), tx);
+        const data = await profile(this.toFirestore(doc, 'update'), tx);
         tx.update(ref, data as UpdateData<Profile>);
         if (this.onUpdate) await this.onUpdate(data, { write: tx, ctx: options.ctx });
         return tx;
       });
     } else if (typeof profile === 'object') {
       const { write = writeBatch(this.db), ctx } = options;
-      (write as WriteBatch).update(ref, this.toFirestore(profile));
+      (write as WriteBatch).update(ref, this.toFirestore(profile, 'update'));
       if (this.onUpdate) await this.onUpdate(profile, { write, ctx });
       // If there is no atomic write provided
       if (!options.write) {
@@ -334,7 +339,7 @@ export abstract class FireAuth<Profile, Roles = undefined> {
     const ref = this.getRef({ user, collection });
     if (ref) {
       const profile = await this.createProfile(user, ctx);
-      (write as WriteBatch).set(ref, this.toFirestore(profile));
+      (write as WriteBatch).set(ref, this.toFirestore(profile, 'add'));
       if (this.onCreate) await this.onCreate(profile, { write, ctx, collection });
       if (!options.write) {
         await (write as WriteBatch).commit();

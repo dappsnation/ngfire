@@ -3,18 +3,19 @@ import { getConfig } from "./config";
 import { FirebaseStorage, getStorage, ref, uploadBytesResumable, UploadMetadata } from "firebase/storage";
 import { initializeApp } from "firebase/app";
 
-export const FIRE_STORAGE = new InjectionToken<() => FirebaseStorage>('Firebase Storage', {
+export const FIRE_STORAGE = new InjectionToken<(bucket?: string) => FirebaseStorage>('Firebase Storage', {
   providedIn: 'root',
   factory: () => {
-    let storage: FirebaseStorage;
+    const storages: Record<string, FirebaseStorage> = {};
     const config = getConfig();
-    return () => {
-      if (!storage) {
+    return (bucket?: string) => {
+      const name = bucket ?? 'default';
+      if (!storages[name]) {
         const app = initializeApp(config.options, config.options.appId);
-        storage = getStorage(app);
-        if (config.storage) config.storage(storage);
+        storages[name] = getStorage(app, bucket);
+        if (config.storage) config.storage(storages[name]);
       }
-      return storage;
+      return storages[name];
     }
   },
 });
@@ -22,9 +23,10 @@ export const FIRE_STORAGE = new InjectionToken<() => FirebaseStorage>('Firebase 
 @Injectable({ providedIn: 'root' })
 export class FireStorage {
   private getStorage = inject(FIRE_STORAGE);
+  protected bucket?: string;
 
   protected get storage() {
-    return this.getStorage();
+    return this.getStorage(this.bucket);
   }
 
   ref(url: string) {
