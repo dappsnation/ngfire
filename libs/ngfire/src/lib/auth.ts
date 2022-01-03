@@ -84,7 +84,7 @@ export abstract class BaseFireAuth<Profile, Roles = undefined> {
   protected verificationUrl?: string;
 
   protected abstract signin(...arg: any[]): Promise<UserCredential>;
-  protected abstract signOut(): Promise<void>;
+  protected abstract signout(): Promise<void>;
 
   protected get db() {
     return this.getFirestore();
