@@ -10,8 +10,8 @@ import { SchemaOptions } from './schema';
 export function ngAdd(options: SchemaOptions): Rule {
   return (tree: Tree, context: SchematicContext) => {
     addDependencies(tree, {
-      ngfire: { version: '0.0.12' },
-      firebase: { version: '^9.2.0' },
+      ngfire: { version: '0.0.13' },
+      firebase: { version: '^9.6.0' },
       'firebase-tools': { dev: true, version: '^10.0.0' },
     }, context);
     context.addTask(new NodePackageInstallTask());

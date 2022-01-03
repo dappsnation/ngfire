@@ -70,8 +70,9 @@ export function isUpdateCallback<T>(
 }
 
 
+
 @Injectable({ providedIn: 'root' })
-export abstract class FireAuth<Profile, Roles = undefined> {
+export abstract class BaseFireAuth<Profile, Roles = undefined> {
   private memoProfile: Record<string, Observable<DocumentSnapshot<Profile>>> = {};
   private platformId = inject(PLATFORM_ID);
   protected getAuth = inject(FIRE_AUTH);
@@ -82,6 +83,8 @@ export abstract class FireAuth<Profile, Roles = undefined> {
   protected idKey = 'id';
   protected verificationUrl?: string;
 
+  protected abstract signin(...arg: any[]): Promise<UserCredential>;
+  protected abstract signOut(): Promise<void>;
 
   protected get db() {
     return this.getFirestore();
@@ -113,17 +116,17 @@ export abstract class FireAuth<Profile, Roles = undefined> {
   );
 
   /** Triggered when the profile has been created */
-  protected onCreate?(profile: Profile, options: AuthWriteOptions): any;
+  protected onCreate?(profile: Partial<Profile>, options: AuthWriteOptions): unknown;
   /** Triggered when the profile has been updated */
-  protected onUpdate?(profile: Partial<Profile>, options: AuthWriteOptions): any;
+  protected onUpdate?(profile: Partial<Profile>, options: AuthWriteOptions): unknown;
   /** Triggered when the profile has been deleted */
-  protected onDelete?(options: AuthWriteOptions): any;
+  protected onDelete?(options: AuthWriteOptions): unknown;
   /** Triggered when user signin for the first time or signup with email & password */
-  protected onSignup?(credential: UserCredential, options: AuthWriteOptions): any;
+  protected onSignup?(credential: UserCredential, options: AuthWriteOptions): unknown;
   /** Triggered when a user signin, except for the first time @see onSignup */
-  protected onSignin?(credential: UserCredential): any;
+  protected onSignin?(credential: UserCredential): unknown;
   /** Triggered when a user signout */
-  protected onSignout?(): any;
+  protected onSignout?(): unknown;
 
   protected useMemo(ref: DocumentReference<Profile>) {
     if (isPlatformServer(this.platformId)) {
@@ -173,7 +176,7 @@ export abstract class FireAuth<Profile, Roles = undefined> {
    * @param user The user object from FireAuth
    * @param ctx The context given on signup
    */
-  protected createProfile(user: User, ctx?: any): Promise<Profile> | Profile {
+  protected createProfile(user: User, ctx?: any): Promise<Partial<Profile>> | Partial<Profile> {
     return { avatar: user?.photoURL, displayName: user?.displayName } as any;
   }
 
@@ -257,6 +260,39 @@ export abstract class FireAuth<Profile, Roles = undefined> {
     }
   }
 
+  /** Manage the creation of the user into Firestore */
+  protected async create(cred: UserCredential, options: AuthWriteOptions) {
+    const user = cred.user;
+    if (!user) {
+      throw new Error('Could not create an account');
+    }
+
+    const { write = writeBatch(this.db), ctx, collection } = options;
+    if (this.onSignup) await this.onSignup(cred, { write, ctx, collection });
+
+    const ref = this.getRef({ user, collection });
+    if (ref) {
+      const profile = await this.createProfile(user, ctx);
+      (write as WriteBatch).set(ref, this.toFirestore(profile, 'add'));
+      if (this.onCreate) await this.onCreate(profile, { write, ctx, collection });
+      if (!options.write) {
+        await (write as WriteBatch).commit();
+      }
+    }
+    return cred;
+  }
+}
+
+
+
+
+
+
+
+@Injectable({ providedIn: 'root' })
+export abstract class FireAuth<Profile, Roles = undefined> extends BaseFireAuth<Profile, Roles> {
+  protected abstract path: string | undefined;
+
   /**
    * Create a user based on email and password
    * Will send a verification email to the user if verificationURL is provided config
@@ -324,27 +360,5 @@ export abstract class FireAuth<Profile, Roles = undefined> {
   async signout() {
     await signOut(this.auth);
     if (this.onSignout) await this.onSignout();
-  }
-
-  /** Manage the creation of the user into Firestore */
-  private async create(cred: UserCredential, options: AuthWriteOptions) {
-    const user = cred.user;
-    if (!user) {
-      throw new Error('Could not create an account');
-    }
-
-    const { write = writeBatch(this.db), ctx, collection } = options;
-    if (this.onSignup) await this.onSignup(cred, { write, ctx, collection });
-
-    const ref = this.getRef({ user, collection });
-    if (ref) {
-      const profile = await this.createProfile(user, ctx);
-      (write as WriteBatch).set(ref, this.toFirestore(profile, 'add'));
-      if (this.onCreate) await this.onCreate(profile, { write, ctx, collection });
-      if (!options.write) {
-        await (write as WriteBatch).commit();
-      }
-    }
-    return cred;
   }
 }
