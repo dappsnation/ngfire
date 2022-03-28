@@ -1,4 +1,4 @@
-import { inject, InjectionToken } from "@angular/core";
+import { InjectionToken } from "@angular/core";
 import type { Firestore } from 'firebase/firestore';
 import { getFirestore } from "firebase/firestore";
 import { getConfig } from "./config";

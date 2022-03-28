@@ -58,6 +58,9 @@
     "firestore": {
       "port": 8000
     },
+    "database": {
+      "port": 9000
+    },
     "hosting": {
       "port": 5000
     },

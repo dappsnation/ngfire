@@ -44,6 +44,7 @@ export class CallableFunctions {
     if (!this.callables[name]) {
       this.callables[name] = httpsCallable(this.function, name, options);
     }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result = await this.callables[name]!(data);
     return result.data as any;
   }

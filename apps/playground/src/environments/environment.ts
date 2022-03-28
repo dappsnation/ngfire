@@ -6,6 +6,7 @@ import { Firestore, connectFirestoreEmulator } from "firebase/firestore";
 import { Auth, connectAuthEmulator } from "firebase/auth";
 import { FirebaseStorage, connectStorageEmulator } from "firebase/storage";
 import { Functions, connectFunctionsEmulator } from "firebase/functions";
+import { Database, connectDatabaseEmulator } from "firebase/database";
 
 export const environment = {
   production: false,
@@ -27,6 +28,9 @@ export const environment = {
     },
     functions: (functions: Functions) => {
       connectFunctionsEmulator(functions, "localhost", 5001);
+    },
+    database: (db: Database) => {
+      connectDatabaseEmulator(db, "localhost", 9000);
     }
   },
   useEmulators: true

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { inject, NgZone, PLATFORM_ID } from '@angular/core';
 import { Observable, of, combineLatest, from } from 'rxjs';
 import { map, startWith, take, tap } from 'rxjs/operators';
