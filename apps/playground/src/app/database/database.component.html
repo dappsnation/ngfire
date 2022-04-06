@@ -1,1 +1,9 @@
-<p>database works!</p>
+<ul>
+  <li *ngFor="let token of tokens$ | async">
+    <button (click)="remove(token.key)">Remove</button>
+    <p>{{ token.tokenId }}</p>
+    <small>{{ token.created | date }}</small>
+  </li>
+</ul>
+
+<button (click)="add()">Add</button>

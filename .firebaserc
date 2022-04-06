@@ -1,12 +1,12 @@
 {
   "targets": {
-    "dev-kampoy": {
+    "demo-firebase": {
       "hosting": {
-        "playground": ["dev-kampoy"]
+        "playground": ["demo-firebase"]
       }
     }
   },
   "projects": {
-    "default": "dev-kampoy"
+    "default": "demo-firebase"
   }
 }

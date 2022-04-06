@@ -3,7 +3,7 @@ export * from './lib/auth';
 export * from './lib/collection';
 export * from './lib/firestore';
 export * from './lib/functions';
-// export * from './lib/database';
+export * from './lib/database';
 export * from './lib/operators';
 export * from './lib/storage';
 export * from './lib/sub-collection';

@@ -16,6 +16,7 @@ export const environment = {
       apiKey: 'abcd',
       authDomain: 'demo-firebase.firebaseapp.com',
       storageBucket: 'default-bucket',
+      
     },
     firestore: (firestore: Firestore) => {
       connectFirestoreEmulator(firestore, 'localhost', 8000);
