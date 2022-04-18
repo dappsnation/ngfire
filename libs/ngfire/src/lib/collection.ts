@@ -154,8 +154,8 @@ export abstract class FireCollection<E extends DocumentData> {
     return writeBatch(this.db);
   }
 
-  runTransaction(cb: (transaction: Transaction) => Promise<E>) {
-    return runTransaction<E>(this.db, (tx) => cb(tx));
+  runTransaction<T>(cb: (transaction: Transaction) => Promise<T>) {
+    return runTransaction<T>(this.db, (tx) => cb(tx));
   }
 
   createId() {
@@ -245,7 +245,7 @@ export abstract class FireCollection<E extends DocumentData> {
 
     if (Array.isArray(ids)) {
       // List of ids or paths
-      if (isIdList(ids)) return ids.map((id) => this.getRef(id));
+      if (isIdList(ids)) return ids.map((id) => this.getRef(id, params));
       // List of constraints
       if (params) return query(this.getRef(params), ...ids);  // Required for type safety
       return query(this.getRef(), ...ids);
@@ -331,26 +331,20 @@ export abstract class FireCollection<E extends DocumentData> {
       const id: string | FieldValue | undefined = doc[this.idKey];
       if (typeof id !== 'string') return false;
       const ref = this.getRef(id, options.params);
-      const { exists } = (options.write instanceof Transaction)
+      const snap = (options.write instanceof Transaction)
         ? await options.write?.get(ref)
         : await getDoc(ref);
-      return exists;
+      return snap.exists();
     };
-    if (!Array.isArray(documents)) {
-      return (await doesExist(documents))
-        ? this.update(documents, options).then((_) => documents[this.idKey] as string)
-        : this.add(documents, options);
+    const upsert = async (doc: FireEntity<E>) => {
+      const exists = await doesExist(doc);
+      if (!exists) return this.add(doc, options);
+      await this.update(doc, options);
+      return doc[this.idKey] as string;
     }
-
-    const toAdd: FireEntity<E>[] = [];
-    const toUpdate: FireEntity<E>[] = [];
-    for (const doc of documents) {
-      (await doesExist(doc)) ? toUpdate.push(doc) : toAdd.push(doc);
-    }
-    return Promise.all([
-      this.add(toAdd, options),
-      this.update(toUpdate, options).then((_) => toUpdate.map((doc) => doc[this.idKey] as string)),
-    ]).then(([added, updated]) => added.concat(updated) as any);
+    return Array.isArray(documents)
+      ? Promise.all(documents.map(upsert))
+      : upsert(documents);
   }
 
   /**

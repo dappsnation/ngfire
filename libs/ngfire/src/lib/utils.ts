@@ -33,14 +33,14 @@ export function getPathParams(path: string) {
   return path
     .split('/')
     .filter((segment) => segment.charAt(0) === ':')
-    .map((segment) => segment.substr(1));
+    .map((segment) => segment.substring(1));
 }
 
 
 export function assertPath(path: string) {
   for (const segment of path.split('/')) {
     if (segment.charAt(0) === ':') {
-      const key = segment.substr(1);
+      const key = segment.substring(1);
       throw new Error(`Required parameter ${key} from ${path} has not been provided`);
     }
   }
