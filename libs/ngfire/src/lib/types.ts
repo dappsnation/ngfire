@@ -14,7 +14,7 @@ export type UpdateCallback<E> = (
 
 export interface MetaDocument {
   createdAt: Date;
-  modifiedAt: Date;
+  updatedAt?: Date;
 }
 
 export type Params = Record<string, string>;

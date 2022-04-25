@@ -173,10 +173,10 @@ export abstract class FireCollection<E extends DocumentData> {
   /** Function triggered when adding/updating data to firestore */
   protected toFirestore(entity: FireEntity<E>, actionType: 'add' | 'update'): any | Promise<any> {
     if (actionType === 'add') {
-      const _meta: MetaDocument = { createdAt: new Date(), modifiedAt: new Date() };
+      const _meta: MetaDocument = { createdAt: new Date(), updatedAt: new Date() };
       return { _meta, ...entity };
     } else {
-      return { '_meta.modifiedAt': new Date(), ...entity };
+      return { ...entity, '_meta.updatedAt': new Date() };
     }
   }
 

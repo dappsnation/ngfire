@@ -164,10 +164,10 @@ export abstract class BaseFireAuth<Profile, Roles = undefined> {
    */
   protected toFirestore(profile: Partial<Profile>, actionType: 'add' | 'update'): any {
     if (actionType === 'add') {
-      const _meta: MetaDocument = { createdAt: new Date(), modifiedAt: new Date() };
+      const _meta: MetaDocument = { createdAt: new Date(), updatedAt: new Date() };
       return { _meta, ...profile };
     } else {
-      return { '_meta.modifiedAt': new Date(), ...profile };
+      return { '_meta.updatedAt': new Date(), ...profile };
     }
   }
 
