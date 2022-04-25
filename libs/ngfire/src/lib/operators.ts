@@ -181,7 +181,7 @@ export function joinWith<T, Query extends QueryMap<T>>(queries: Query, options: 
     return combineLatest(obs).pipe(
       map(() => {
         if (!entity) return entity;
-        return JSON.parse(JSON.stringify(entity)) as any
+        return JSON.parse(JSON.stringify(entity), jsonDateReviver) as any;
       }),
     );
   }
@@ -193,4 +193,19 @@ export function joinWith<T, Query extends QueryMap<T>>(queries: Query, options: 
     }
     return runQuery(data as Entity<T>);
   });
+}
+
+function jsonDateReviver(_: unknown, value: any) {
+  if (!value) return value;
+
+  const dateFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,}|)Z$/;
+  if (typeof value === 'string' && dateFormat.test(value)) return new Date(value);
+  if (
+    typeof value === 'object' &&
+    Object.keys(value).length === 2 &&
+    ['nanoseconds', 'seconds'].every((k) => k in value)
+  )
+    return new Date(((value.nanoseconds * 1) ^ -6) + value.seconds * 1000);
+
+  return value;
 }
