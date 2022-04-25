@@ -176,7 +176,7 @@ export abstract class FireCollection<E extends DocumentData> {
       const _meta: MetaDocument = { createdAt: new Date(), modifiedAt: new Date() };
       return { _meta, ...entity };
     } else {
-      return { '_meta.modifiedAt': new Date(), ...entity };
+      return { ...entity, '_meta.modifiedAt': new Date() };
     }
   }
 
