@@ -43,4 +43,4 @@ export type DeepEntity<T> = Partial<{
   [key in DeepKeys<T>]: DeepValue<T, key> | FieldValue;
 }>
 
-export type FireEntity<T> = DeepEntity<T> & DeepEntity<{ _meta: MetaDocument }>;
+export type FireEntity<T> = DeepEntity<T>;
