@@ -12,6 +12,7 @@ import { AtomicWrite, MetaDocument, UpdateCallback } from "./types";
 import { shareWithDelay } from "./operators";
 import { isPlatformServer } from "@angular/common";
 import { keepUnstableUntilFirst } from "./zone";
+import { toDate } from "./collection";
 
 const exist = <T>(v?: T | null): v is T => v !== null && v !== undefined;
 
@@ -154,7 +155,7 @@ export abstract class BaseFireAuth<Profile, Roles = undefined> {
    */
   protected fromFirestore(snapshot: DocumentSnapshot<Profile>) {
     return snapshot.exists()
-      ? ({ ...snapshot.data(), [this.idKey]: snapshot.id } as Profile)
+      ? ({ ...toDate(snapshot.data()), [this.idKey]: snapshot.id } as Profile)
       : undefined;
   }
 

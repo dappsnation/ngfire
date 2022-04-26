@@ -9,7 +9,7 @@ import {
   of,
   from,
 } from 'rxjs';
-import { map, startWith, switchMap, tap } from 'rxjs/operators';
+import { debounceTime, map, startWith, switchMap, tap } from 'rxjs/operators';
 
 import { onSnapshot, DocumentReference, DocumentData, SnapshotListenOptions, Query, DocumentSnapshot, QuerySnapshot } from 'firebase/firestore';
 import { Auth, User, onIdTokenChanged } from 'firebase/auth';
@@ -131,6 +131,8 @@ type Jointure<T, Query extends QueryMap<any>> = T extends Array<infer I>
 interface JoinWithOptions {
   /** If set to false, the subqueries will be filled with undefined and hydrated as they come through */
   shouldAwait?: boolean;
+  /** Used to not trigger change detection too often */
+  debounceTime?: number;
 }
 
 /**
@@ -151,6 +153,7 @@ interface JoinWithOptions {
  */
 export function joinWith<T, Query extends QueryMap<T>>(queries: Query, options: JoinWithOptions = {}): OperatorFunction<T, Jointure<T, Query>> {
   const shouldAwait = options.shouldAwait ?? true;
+  const debounce = options.debounceTime ?? 100;
   const runQuery = (entity: Entity<T>) => {
     const obs = [];
     for (const key in queries) {
@@ -189,7 +192,7 @@ export function joinWith<T, Query extends QueryMap<T>>(queries: Query, options: 
   return switchMap((data: T) => {
     if (Array.isArray(data)) {
       if (!data.length) return of([]);
-      return combineLatest(data.map(runQuery));
+      return combineLatest(data.map(runQuery)).pipe(debounceTime(debounce));
     }
     return runQuery(data as Entity<T>);
   });

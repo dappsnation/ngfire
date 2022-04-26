@@ -4,7 +4,7 @@ import { Observable, of, combineLatest, from } from 'rxjs';
 import { map, startWith, take, tap } from 'rxjs/operators';
 import { FIRESTORE } from './firestore';
 import { writeBatch, runTransaction, doc, collection, Query, getDocs, getDoc, query, queryEqual, Timestamp, Transaction, DocumentSnapshot, FieldValue } from 'firebase/firestore';
-import type { DocumentData, CollectionReference, DocumentReference, QueryConstraint, QueryDocumentSnapshot, QuerySnapshot, WriteBatch, UpdateData } from 'firebase/firestore';
+import type { DocumentData, CollectionReference, DocumentReference, QueryConstraint, QueryDocumentSnapshot, QuerySnapshot, WriteBatch } from 'firebase/firestore';
 import { shareWithDelay, fromRef } from './operators';
 import { WriteOptions, UpdateCallback, MetaDocument, Params, FireEntity, DeepKeys } from './types';
 import { assertPath, isIdList, isPathRef, pathWithParams } from './utils';
