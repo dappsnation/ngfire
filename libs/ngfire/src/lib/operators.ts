@@ -192,9 +192,9 @@ export function joinWith<T, Query extends QueryMap<T>>(queries: Query, options: 
   return switchMap((data: T) => {
     if (Array.isArray(data)) {
       if (!data.length) return of([]);
-      return combineLatest(data.map(runQuery));
+      return combineLatest(data.map(runQuery)).pipe(debounceTime(debounce));
     }
-    return runQuery(data as Entity<T>).pipe(debounceTime(debounce));
+    return runQuery(data as Entity<T>);
   });
 }
 
