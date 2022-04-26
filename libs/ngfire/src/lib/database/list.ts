@@ -140,7 +140,6 @@ export abstract class FireList<T> {
 
   add(value: Partial<T>, params?: Params) {
     const doc = this.toDatabase(value, 'add');
-    console.log(doc);
     if (this.idKey && doc[this.idKey]) {
       const key = toKey(doc[this.idKey]);
       const ref = this.getRef(key, params);
