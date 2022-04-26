@@ -3,7 +3,8 @@ import type { Functions } from "firebase/functions";
 import type { FirebaseStorage } from "firebase/storage";
 import type { FirebaseOptions } from 'firebase/app';
 import type { Auth } from "firebase/auth";
-import type { Firestore } from 'firebase/firestore';
+import type { Firestore, FirestoreSettings } from 'firebase/firestore';
+import type { Database } from "firebase/database";
 
 interface FirebaseConfig {
   options: FirebaseOptions,
@@ -11,10 +12,12 @@ interface FirebaseConfig {
   auth?: (auth: Auth) => void,
   storage?: (storage: FirebaseStorage) => void,
   functions?: (functions: Functions) => void,
+  database?: (db: Database) => void,
 }
 
 export const FIREBASE_CONFIG = new InjectionToken<FirebaseConfig>('Firebase Config');
 export const REGION_OR_DOMAIN = new InjectionToken<string>('Firebase cloud functions region or domain');
+export const FIRESTORE_SETTINGS = new InjectionToken<FirestoreSettings>('Firestore settings');
 
 export function getConfig() {
   try {

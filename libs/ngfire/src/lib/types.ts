@@ -34,6 +34,22 @@ export type DeepKeys<T> =
   : '';
 
 
+type ExtractKey<T, V, K extends Extract<keyof T, string>> = 
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  T[K] extends Function ? never
+  : T[K] extends (V | undefined) ? K
+  // remove object that could be record after verifing V
+  : T[K] extends Date ? never
+  : T[K] extends Array<any> ? never
+  : T[K] extends Record<string, any> ? Join<K, ExtractDeepKeys<T[K], V>>
+  : never;
+
+export type ExtractDeepKeys<T, V> =
+  T extends Date ? ''
+  : T extends Array<any> ? ''
+  : T extends Record<string, any> ? { [K in Extract<keyof T, string>]: ExtractKey<T, V, K> }[Extract<keyof T, string>]
+  : '';
+
 type DeepValue<T, K> =
   K extends `${infer I}.${infer J}` ? (I extends keyof T ? DeepValue<T[I], J> : never)
   : K extends keyof T ? T[K] : never;

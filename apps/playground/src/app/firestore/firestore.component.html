@@ -1,0 +1,11 @@
+<ul>
+  <li *ngFor="let flight of flight$ | async">
+    {{ flight.number }}: {{ flight.info }}
+  </li>
+</ul>
+
+<form [formGroup]="form" (ngSubmit)="add()">
+  <input formControlName="number" />
+  <textarea formControlName="info"></textarea>
+  <button>Submit</button>
+</form>

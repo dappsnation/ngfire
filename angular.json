@@ -23,6 +23,13 @@
           },
           "defaultConfiguration": "production"
         },
+        "publish": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "command": "npm publish",
+            "cwd": "dist/libs/ngfire"
+          }
+        },
         "test": {
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/libs/ngfire"],

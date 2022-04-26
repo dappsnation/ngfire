@@ -25,6 +25,11 @@ Add the firebase config
 
 `environment.ts` (use emulator) : 
 ```typescript
+import { Auth, connectAuthEmulator } from "firebase/auth";
+import { connectFirestoreEmulator, Firestore } from "firebase/firestore";
+import { connectFunctionsEmulator, Functions } from "firebase/functions";
+import { connectStorageEmulator, FirebaseStorage } from "firebase/storage";
+
 export const environment = {
   production: false,
   firebase: {
@@ -50,7 +55,7 @@ export const environment = {
 }
 ```
 
-`environment.prod.ts` : 
+`environment.prod.ts` (use your project's config here) : 
 ```typescript
 export const environment = {
   production: false,

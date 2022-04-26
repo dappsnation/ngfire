@@ -1,6 +1,7 @@
 import { collectionGroup, query } from "firebase/firestore";
 import type { QueryDocumentSnapshot, DocumentSnapshot, Query, QueryConstraint } from 'firebase/firestore';
-import { FireCollection, isIdList, toDate } from "./collection";
+import { FireCollection, toDate } from "./collection";
+import { isIdList } from './utils';
 import { Params } from './types'
 import { Observable, of } from "rxjs";
 import { map, take } from "rxjs/operators";

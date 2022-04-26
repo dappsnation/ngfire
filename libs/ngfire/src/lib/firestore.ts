@@ -1,7 +1,7 @@
-import { inject, InjectionToken } from "@angular/core";
+import { inject, InjectFlags, InjectionToken } from "@angular/core";
 import type { Firestore } from 'firebase/firestore';
-import { getFirestore } from "firebase/firestore";
-import { getConfig } from "./config";
+import { initializeFirestore } from "firebase/firestore";
+import { FIRESTORE_SETTINGS, getConfig } from "./config";
 import { initializeApp } from "firebase/app";
 
 export const FIRESTORE = new InjectionToken<() => Firestore>('Firestore instance', {
@@ -9,10 +9,11 @@ export const FIRESTORE = new InjectionToken<() => Firestore>('Firestore instance
   factory: () => {
     let firestore: Firestore;
     const config = getConfig();
+    const settings = inject(FIRESTORE_SETTINGS, InjectFlags.Optional);
     return () => {
       if (!firestore) {
         const app = initializeApp(config.options, config.options.appId);
-        firestore = getFirestore(app);
+        firestore = initializeFirestore(app, settings ?? {});
         if (config.firestore) config.firestore(firestore);
       }
       return firestore;

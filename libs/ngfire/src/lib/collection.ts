@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { inject, NgZone, PLATFORM_ID } from '@angular/core';
 import { Observable, of, combineLatest, from } from 'rxjs';
 import { map, startWith, take, tap } from 'rxjs/operators';
@@ -6,6 +7,7 @@ import { writeBatch, runTransaction, doc, collection, Query, getDocs, getDoc, qu
 import type { DocumentData, CollectionReference, DocumentReference, QueryConstraint, QueryDocumentSnapshot, QuerySnapshot, WriteBatch, UpdateData } from 'firebase/firestore';
 import { shareWithDelay, fromRef } from './operators';
 import { WriteOptions, UpdateCallback, MetaDocument, Params, FireEntity, DeepKeys } from './types';
+import { assertPath, isIdList, isPathRef, pathWithParams } from './utils';
 
 import { isPlatformServer } from '@angular/common';
 import { keepUnstableUntilFirst } from './zone';
@@ -39,53 +41,12 @@ export function toDate<D>(target: D): D {
   return target;
 }
 
-export function isIdList(idsOrQuery: any[]): idsOrQuery is string[] {
-  return (idsOrQuery as any[]).every(id => typeof id === 'string');
-}
+
 function isQuery<E>(ref: CollectionReference<E> | DocumentReference<E> | Query<E>): ref is Query<E> {
   return ref.type === 'query';
 }
 function isCollectionRef<E>(ref: CollectionReference<E> | DocumentReference<E> | Query<E>): ref is CollectionReference<E> {
   return ref.type === 'collection';
-}
-
-///////////////////
-// GROUP HELPERS //
-///////////////////
-
-/**
- * Transform a path based on the params
- * @param path The path with params starting with "/:"
- * @param params A map of id params
- * @example pathWithParams('movies/:movieId/stakeholder/:shId', { movieId, shId })
- */
- export function pathWithParams(path: string, params?: Params): string {
-  if (!params) return path;
-  return path
-    .split('/')
-    .map((segment) => {
-      if (segment.charAt(0) === ':') {
-        const key = segment.substr(1);
-        return params[key] || segment;
-      } else {
-        return segment;
-      }
-    })
-    .join('/');
-}
-
-// Check if a string is a full path
-export function isPathRef(path?: any): path is string {
-  return !!((typeof path === "string") && (path.split('/').length > 1) && !path.includes(':'));
-}
-
-export function assertPath(path: string) {
-  for (const segment of path.split('/')) {
-    if (segment.charAt(0) === ':') {
-      const key = segment.substr(1);
-      throw new Error(`Required parameter ${key} from ${path} has not been provided`);
-    }
-  }
 }
 
 
@@ -193,8 +154,8 @@ export abstract class FireCollection<E extends DocumentData> {
     return writeBatch(this.db);
   }
 
-  runTransaction(cb: (transaction: Transaction) => Promise<E>) {
-    return runTransaction<E>(this.db, (tx) => cb(tx));
+  runTransaction<T>(cb: (transaction: Transaction) => Promise<T>) {
+    return runTransaction<T>(this.db, (tx) => cb(tx));
   }
 
   createId() {
@@ -284,7 +245,7 @@ export abstract class FireCollection<E extends DocumentData> {
 
     if (Array.isArray(ids)) {
       // List of ids or paths
-      if (isIdList(ids)) return ids.map((id) => this.getRef(id));
+      if (isIdList(ids)) return ids.map((id) => this.getRef(id, params));
       // List of constraints
       if (params) return query(this.getRef(params), ...ids);  // Required for type safety
       return query(this.getRef(), ...ids);
@@ -370,26 +331,20 @@ export abstract class FireCollection<E extends DocumentData> {
       const id: string | FieldValue | undefined = doc[this.idKey];
       if (typeof id !== 'string') return false;
       const ref = this.getRef(id, options.params);
-      const { exists } = (options.write instanceof Transaction)
+      const snap = (options.write instanceof Transaction)
         ? await options.write?.get(ref)
         : await getDoc(ref);
-      return exists;
+      return snap.exists();
     };
-    if (!Array.isArray(documents)) {
-      return (await doesExist(documents))
-        ? this.update(documents, options).then((_) => documents[this.idKey] as string)
-        : this.add(documents, options);
+    const upsert = async (doc: FireEntity<E>) => {
+      const exists = await doesExist(doc);
+      if (!exists) return this.add(doc, options);
+      await this.update(doc, options);
+      return doc[this.idKey] as string;
     }
-
-    const toAdd: FireEntity<E>[] = [];
-    const toUpdate: FireEntity<E>[] = [];
-    for (const doc of documents) {
-      (await doesExist(doc)) ? toUpdate.push(doc) : toAdd.push(doc);
-    }
-    return Promise.all([
-      this.add(toAdd, options),
-      this.update(toUpdate, options).then((_) => toUpdate.map((doc) => doc[this.idKey] as string)),
-    ]).then(([added, updated]) => added.concat(updated) as any);
+    return Array.isArray(documents)
+      ? Promise.all(documents.map(upsert))
+      : upsert(documents);
   }
 
   /**
