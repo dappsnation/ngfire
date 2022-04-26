@@ -167,7 +167,7 @@ export abstract class BaseFireAuth<Profile, Roles = undefined> {
       const _meta: MetaDocument = { createdAt: new Date(), modifiedAt: new Date() };
       return { _meta, ...profile };
     } else {
-      return { '_meta.modifiedAt': new Date(), ...profile };
+      return { ...profile, '_meta.modifiedAt': new Date() };
     }
   }
 
