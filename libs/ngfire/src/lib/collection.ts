@@ -63,6 +63,8 @@ export abstract class FireCollection<E extends DocumentData> {
   private zone = inject(NgZone);
   protected abstract readonly path: string;
   protected idKey: DeepKeys<E> = 'id' as any;
+  // If true, will store the document id (IdKey) onto the document
+  protected storeId = false;
   protected memorize = false;
 
   protected onCreate?(entity: E, options: WriteOptions): any;
@@ -109,8 +111,8 @@ export abstract class FireCollection<E extends DocumentData> {
     if (!this.memoPath[path]) {
       const cache = this.cacheDoc[path];
       this.memoPath[path] = cache
-       ? fromRef(ref).pipe(shareWithDelay(), startWith(cache))
-       : fromRef(ref).pipe(shareWithDelay());
+        ? fromRef(ref).pipe(shareWithDelay(), startWith(cache))
+        : fromRef(ref).pipe(shareWithDelay());
     }
     return this.memoPath[path];
   }
@@ -183,7 +185,7 @@ export abstract class FireCollection<E extends DocumentData> {
     if (ref.type === 'document') return getDoc(ref).then(snap => this.snapToData(snap));
     return getDocs(ref).then(snap => this.snapToData(snap));
   }
-  
+
   /** Observable the content of reference(s)  */
   protected fromRef(ref: DocumentReference<E>): Observable<E | undefined>;
   protected fromRef(ref: DocumentReference<E>[]): Observable<E[]>;
@@ -231,13 +233,13 @@ export abstract class FireCollection<E extends DocumentData> {
         ? doc(this.db, ids) as DocumentReference<E>
         : collection(this.db, ids) as CollectionReference<E>;
     }
-    
+
     params = (!Array.isArray(ids) && typeof ids === 'object') ? ids : params;
     const path = pathWithParams(this.path, params);
 
     // If subcollection path make sure the path is correctly built
     assertPath(path);
-    
+
     // Id
     if (typeof ids === 'string') {
       return doc(this.db, getDocPath(path, ids)) as DocumentReference<E>;
@@ -250,11 +252,11 @@ export abstract class FireCollection<E extends DocumentData> {
       if (params) return query(this.getRef(params), ...ids);  // Required for type safety
       return query(this.getRef(), ...ids);
     }
-    
+
     return collection(this.db, path) as CollectionReference<E>;
   }
 
-  
+
   /** Clear cache and get the latest value into the cache */
   public async reload(ids?: string[]): Promise<E[]>;
   public async reload(query?: QueryConstraint[]): Promise<E[]>;
@@ -363,6 +365,7 @@ export abstract class FireCollection<E extends DocumentData> {
     const operations = docs.map(async (value) => {
       const id = (value[this.idKey] as string | undefined) || this.createId();
       const data = await this.toFirestore(value, 'add');
+      if (this.storeId) data[this.idKey] = id;
       const ref = this.getRef(id, options.params);
       (write as WriteBatch).set(ref, data);
       if (this.onCreate) {
