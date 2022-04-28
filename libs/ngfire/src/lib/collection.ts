@@ -63,6 +63,7 @@ export abstract class FireCollection<E extends DocumentData> {
   private zone = inject(NgZone);
   protected abstract readonly path: string;
   protected idKey: DeepKeys<E> = 'id' as any;
+  // If true, will store the document id (IdKey) onto the document
   protected storeId = false;
   protected memorize = false;
 
