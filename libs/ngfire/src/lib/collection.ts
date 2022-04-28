@@ -363,6 +363,7 @@ export abstract class FireCollection<E extends DocumentData> {
     const operations = docs.map(async (value) => {
       const id = (value[this.idKey] as string | undefined) || this.createId();
       const data = await this.toFirestore(value, 'add');
+      data[this.idKey] = id;
       const ref = this.getRef(id, options.params);
       (write as WriteBatch).set(ref, data);
       if (this.onCreate) {
