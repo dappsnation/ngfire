@@ -1,7 +1,7 @@
 import { inject, InjectFlags, InjectionToken } from "@angular/core";
 import type { Firestore } from 'firebase/firestore';
 import { initializeFirestore } from "firebase/firestore";
-import { FIRESTORE_SETTINGS, getConfig } from "./config";
+import { FIRESTORE_SETTINGS, getConfig } from "../config";
 import { initializeApp } from "firebase/app";
 
 export const FIRESTORE = new InjectionToken<() => Firestore>('Firestore instance', {

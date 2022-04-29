@@ -18,6 +18,10 @@ const DEFAULT_OPTIONS = { includeMetadataChanges: false };
 export function fromRef<T=DocumentData>(ref: DocumentReference<T>, options?: SnapshotListenOptions): Observable<DocumentSnapshot<T>>;
 export function fromRef<T=DocumentData>(ref: Query<T>, options?: SnapshotListenOptions): Observable<QuerySnapshot<T>>;
 export function fromRef<T=DocumentData>(
+  ref: DocumentReference<T> | Query<T>,
+  options: SnapshotListenOptions
+): Observable<any>
+export function fromRef<T=DocumentData>(
   ref: any,
   options: SnapshotListenOptions = DEFAULT_OPTIONS
 ): Observable<any> {

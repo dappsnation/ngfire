@@ -1,8 +1,8 @@
 import { collectionGroup, query } from "firebase/firestore";
 import type { QueryDocumentSnapshot, DocumentSnapshot, Query, QueryConstraint } from 'firebase/firestore';
 import { FireCollection, toDate } from "./collection";
-import { isIdList } from './utils';
-import { Params } from './types'
+import { isIdList } from '../utils';
+import { Params } from '../types'
 import { Observable, of } from "rxjs";
 import { map, take } from "rxjs/operators";
 
@@ -12,7 +12,7 @@ export function getPathParams(path: string) {
   return path
     .split('/')
     .filter((segment) => segment.charAt(0) === ':')
-    .map((segment) => segment.substr(1));
+    .map((segment) => segment.substring(1));
 }
 
 export abstract class FireSubCollection<E> extends FireCollection<E> {
@@ -64,7 +64,8 @@ export abstract class FireSubCollection<E> extends FireCollection<E> {
     if (Array.isArray(idOrQuery) && !idOrQuery.length) return [];
 
     // Collection Query
-    const ref = this.getRef(idOrQuery as any, params);
+    const ref = this.getRef(idOrQuery, params);
+    if (!ref) return;
     return this.getFromRef(ref);
   }
 
@@ -82,12 +83,12 @@ export abstract class FireSubCollection<E> extends FireCollection<E> {
     const isGroupQuery = arguments.length === 1 && Array.isArray(idOrQuery) && !isIdList(idOrQuery);
     const ref = isGroupQuery
       ? this.getGroupRef(idOrQuery)
-      : this.getRef(idOrQuery as any, params);
-    
+      : this.getRef(idOrQuery, params);
+    if (!ref) return;
     Array.isArray(ref)
       ? ref.forEach(r => this.clearCache(r))
       : this.clearCache(ref);
-    return this.load(idOrQuery as any, params);
+    return this.load(idOrQuery, params);
   }
   
 
@@ -95,23 +96,31 @@ export abstract class FireSubCollection<E> extends FireCollection<E> {
   public load(ids?: string[], params?: Params): Promise<E[]>;
   public load(params: Params): Promise<E[]>;
   public load(query?: QueryConstraint[], params?: Params): Promise<E[]>;
-  public load(id?: string | null, params?: Params): Promise<E | undefined>;
+  public load(id?: string, params?: Params): Promise<E | undefined>;
   public load(
-    idOrQuery?: null | string | string[] | QueryConstraint[] | Params,
+    idOrQuery?: string | string[] | QueryConstraint[] | Params,
+    params?: Params
+  ): Promise<E | E[] | undefined>;
+  public load(
+    idOrQuery?: string | string[] | QueryConstraint[] | Params,
     params?: Params
   ): Promise<E | E[] | undefined> {
     if (arguments.length === 0) return this.valueChanges().pipe(take(1)).toPromise();
-    if (arguments.length === 1) return this.valueChanges(idOrQuery as any).pipe(take(1)).toPromise();
-    return this.valueChanges(idOrQuery as any, params).pipe(take(1)).toPromise();
+    if (arguments.length === 1) return this.valueChanges(idOrQuery).pipe(take(1)).toPromise();
+    return this.valueChanges(idOrQuery, params).pipe(take(1)).toPromise();
   }
 
   /** Return the current value of the path from Firestore */
   public valueChanges(ids?: string[], params?: Params): Observable<E[]>;
   public valueChanges(params: Params): Observable<E[]>;
   public valueChanges(query?: QueryConstraint[], params?: Params): Observable<E[]>;
-  public valueChanges(id?: string | null, params?: Params): Observable<E | undefined>;
+  public valueChanges(id?: string, params?: Params): Observable<E | undefined>;
   public valueChanges(
-    idOrQuery?: null | string | string[] | QueryConstraint[] | Params,
+    idOrQuery?: string | string[] | QueryConstraint[] | Params,
+    params?: Params
+  ): Observable<E | E[] | undefined>;
+  public valueChanges(
+    idOrQuery?: string | string[] | QueryConstraint[] | Params,
     params?: Params
   ): Observable<E | E[] | undefined> {
     // Group query
@@ -126,7 +135,8 @@ export abstract class FireSubCollection<E> extends FireCollection<E> {
     if (Array.isArray(idOrQuery) && !idOrQuery.length) return of([]);
 
     // Collection query
-    const ref = this.getRef(idOrQuery as any, params);
+    const ref = this.getRef(idOrQuery, params);
+    if (!ref) return of(undefined);
     return this.fromRef(ref);
   }
 
