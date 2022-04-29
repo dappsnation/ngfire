@@ -1,18 +1,18 @@
 import { inject, Injectable, InjectionToken, NgZone, PLATFORM_ID } from "@angular/core";
+import { isPlatformServer } from "@angular/common";
+import { doc, getDoc, writeBatch, runTransaction } from "firebase/firestore";
 import { Auth, getAuth, UserCredential, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, signInAnonymously, signInWithPopup, signInWithCustomToken, AuthProvider, User, getAdditionalUserInfo } from "firebase/auth";
 import { getConfig } from "./config";
 import { initializeApp } from "firebase/app";
 import { FIRESTORE } from "./firestore";
-import { filter, map, switchMap, take } from "rxjs/operators";
-import { doc, getDoc, writeBatch, runTransaction } from "firebase/firestore";
 import type { WriteBatch, DocumentSnapshot, DocumentReference, UpdateData } from 'firebase/firestore';
 import { user, fromRef } from './operators';
-import { from, Observable, of } from "rxjs";
 import { AtomicWrite, MetaDocument, UpdateCallback } from "./types";
 import { shareWithDelay } from "./operators";
-import { isPlatformServer } from "@angular/common";
 import { keepUnstableUntilFirst } from "./zone";
-import { toDate } from "./collection";
+import { toDate } from "./firestore/collection";
+import { filter, map, switchMap, take } from "rxjs/operators";
+import { from, Observable, of } from "rxjs";
 
 const exist = <T>(v?: T | null): v is T => v !== null && v !== undefined;
 

@@ -1,16 +1,17 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { inject, NgZone, PLATFORM_ID } from '@angular/core';
 import { Observable, of, combineLatest, from } from 'rxjs';
-import { map, startWith, take, tap } from 'rxjs/operators';
-import { FIRESTORE } from './firestore';
-import { writeBatch, runTransaction, doc, collection, Query, getDocs, getDoc, query, queryEqual, Timestamp, Transaction, DocumentSnapshot, FieldValue } from 'firebase/firestore';
+import { map, take } from 'rxjs/operators';
+import { FIRESTORE } from '../firestore';
+import { writeBatch, runTransaction, doc, collection, Query, getDocs, getDoc, Timestamp, Transaction, DocumentSnapshot, FieldValue } from 'firebase/firestore';
 import type { DocumentData, CollectionReference, DocumentReference, QueryConstraint, QueryDocumentSnapshot, QuerySnapshot, WriteBatch } from 'firebase/firestore';
-import { shareWithDelay, fromRef } from './operators';
-import { WriteOptions, UpdateCallback, MetaDocument, Params, FireEntity, DeepKeys } from './types';
-import { assertPath, isIdList, isPathRef, pathWithParams } from './utils';
+import { fromRef } from '../operators';
+import { WriteOptions, UpdateCallback, MetaDocument, Params, FireEntity, DeepKeys } from '../types';
+import { isIdList, isNotUndefined, isPathRef, isQuery, pathWithParams } from '../utils';
 
 import { isPlatformServer } from '@angular/common';
-import { keepUnstableUntilFirst } from './zone';
+import { keepUnstableUntilFirst } from '../zone';
+import { FirestoreService } from './firestore';
 
 /////////////
 // HELPERS //
@@ -20,10 +21,6 @@ import { keepUnstableUntilFirst } from './zone';
 export function getDocPath(path: string, id: string) {
   // If path is smaller than id, id is the full path from ref
   return path.split('/').length < id.split('/').length ? id : `${path}/${id}`;
-}
-
-function isNotUndefined<D>(doc: D | undefined): doc is D {
-  return doc !== undefined;
 }
 
 /** Recursively all Timestamp into Date */
@@ -42,25 +39,15 @@ export function toDate<D>(target: D): D {
 }
 
 
-function isQuery<E>(ref: CollectionReference<E> | DocumentReference<E> | Query<E>): ref is Query<E> {
-  return ref.type === 'query';
-}
-function isCollectionRef<E>(ref: CollectionReference<E> | DocumentReference<E> | Query<E>): ref is CollectionReference<E> {
-  return ref.type === 'collection';
-}
-
-
 /////////////
 // SERVICE //
 /////////////
 
 export abstract class FireCollection<E extends DocumentData> {
-  private cacheDoc: Record<string, DocumentSnapshot<E>> = {};
-  private memoPath: Record<string, Observable<DocumentSnapshot<E> | QuerySnapshot<E>>> = {};
-  private memoQuery: Map<Query, Observable<QuerySnapshot<E>>> = new Map();
   private getFirestore = inject(FIRESTORE);
   private platformId = inject(PLATFORM_ID);
   private zone = inject(NgZone);
+  private firestore = inject(FirestoreService);
   protected abstract readonly path: string;
   protected idKey: DeepKeys<E> = 'id' as any;
   // If true, will store the document id (IdKey) onto the document
@@ -77,60 +64,17 @@ export abstract class FireCollection<E extends DocumentData> {
   }
 
   protected useCache(ref: DocumentReference<E>): Observable<DocumentSnapshot<E>>
-  protected useCache(ref: CollectionReference<E> | Query<E>): Observable<QuerySnapshot<E>>
-  protected useCache(
-    ref: CollectionReference<E> | DocumentReference<E> | Query<E>
-  ): Observable<DocumentSnapshot<E> | QuerySnapshot<E>> {
-    // Collection
-    if (isCollectionRef(ref)) {
-      if (!this.memorize) return fromRef(ref);
-      const path = ref.path;
-      if (!this.memoPath[path]) {
-        this.memoPath[path] = fromRef(ref).pipe(
-          tap(snap => snap.docs.forEach(doc => this.cacheDoc[doc.ref.path] = doc)),
-          shareWithDelay(),
-        );
-      }
-      return this.memoPath[path];
-    }
-    // Query
-    if (isQuery(ref)) {
-      if (!this.memorize) return fromRef(ref);
-      for (const query of this.memoQuery.keys()) {
-        if (queryEqual(query, ref)) return this.memoQuery.get(query)!;
-      }
-      this.memoQuery.set(ref, fromRef(ref).pipe(
-        tap(snap => snap.docs.forEach(doc => this.cacheDoc[doc.ref.path] = doc)),
-        shareWithDelay(),
-      ));
-      return this.memoQuery.get(ref)!;
-    }
-    // Document
-    if (!this.memorize) return fromRef(ref);
-    const path = ref.path;
-    if (!this.memoPath[path]) {
-      const cache = this.cacheDoc[path];
-      this.memoPath[path] = cache
-        ? fromRef(ref).pipe(shareWithDelay(), startWith(cache))
-        : fromRef(ref).pipe(shareWithDelay());
-    }
-    return this.memoPath[path];
+  protected useCache(ref: Query<E>): Observable<QuerySnapshot<E>>
+  protected useCache(ref: DocumentReference<E> | Query<E>): Observable<DocumentSnapshot<E> | QuerySnapshot<E>>   
+  protected useCache(ref: DocumentReference<E> | Query<E>): Observable<DocumentSnapshot<E> | QuerySnapshot<E>> {    
+    if (!this.memorize) return isQuery(ref) ? fromRef(ref) : fromRef(ref);
+    return this.firestore.fromMemory(ref);
   }
 
-  protected clearCache(refs?: CollectionReference<E> | DocumentReference<E> | Query<E> | DocumentReference<E>[]) {
-    // If no arguments are provided, clear everything
-    if (!arguments.length) {
-      this.memoPath = {};
-      this.memoQuery.clear();
-    }
-    if (!refs) return;
-    if (Array.isArray(refs)) {
-      refs.forEach(ref => delete this.memoPath[ref.path]);
-    } else if (isQuery(refs)) {
-      this.memoQuery.delete(refs);
-    } else {
-      delete this.memoPath[refs.path];
-    }
+  protected clearCache(refs: CollectionReference<E> | DocumentReference<E> | Query<E> | DocumentReference<E>[]) {
+    if (Array.isArray(refs)) return this.firestore.clearCache(refs.map(ref => ref.path));
+    if (isQuery(refs)) return this.firestore.clearCache(refs);
+    return this.firestore.clearCache(refs?.path);
   }
 
   /** Function triggered when adding/updating data to firestore */
@@ -165,9 +109,10 @@ export abstract class FireCollection<E extends DocumentData> {
   }
 
   /** Get the content of the snapshot */
-  protected snapToData(snap: DocumentSnapshot<E>): E
-  protected snapToData(snap: DocumentSnapshot<E>[]): E[]
-  protected snapToData(snap: QuerySnapshot<E>): E[]
+  protected snapToData(snap: DocumentSnapshot<E>): E;
+  protected snapToData(snap: DocumentSnapshot<E>[]): E[];
+  protected snapToData(snap: QuerySnapshot<E>): E[];
+  protected snapToData(snap: QuerySnapshot<E> | DocumentSnapshot<E> | DocumentSnapshot<E>[]): E | E[];
   protected snapToData(snap: QuerySnapshot<E> | DocumentSnapshot<E> | DocumentSnapshot<E>[]): E | E[] {
     if (snap instanceof DocumentSnapshot) return this.fromFirestore(snap) as E;
     const snaps = Array.isArray(snap) ? snap : snap.docs;
@@ -178,6 +123,9 @@ export abstract class FireCollection<E extends DocumentData> {
   protected async getFromRef(ref: DocumentReference<E>): Promise<E | undefined>;
   protected async getFromRef(ref: DocumentReference<E>[]): Promise<E[]>;
   protected async getFromRef(ref: CollectionReference<E> | Query<E>): Promise<E[]>;
+  protected async getFromRef(
+    ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>
+  ): Promise<undefined | E | E[]>;
   protected async getFromRef(
     ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>
   ): Promise<undefined | E | E[]> {
@@ -192,6 +140,9 @@ export abstract class FireCollection<E extends DocumentData> {
   protected fromRef(ref: CollectionReference<E> | Query<E>): Observable<E[]>;
   protected fromRef(
     ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>
+  ): Observable<undefined | E | E[]>;
+  protected fromRef(
+    ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>
   ): Observable<undefined | E | E[]> {
     if (isPlatformServer(this.platformId)) {
       return this.zone.runOutsideAngular(() => from(this.getFromRef(ref as any))).pipe(
@@ -203,7 +154,7 @@ export abstract class FireCollection<E extends DocumentData> {
       const queries = ref.map(r => this.useCache(r));
       return combineLatest(queries).pipe(map(snaps => this.snapToData(snaps)));
     } else {
-      return this.useCache(ref as any).pipe(map(snaps => this.snapToData(snaps)));
+      return this.useCache(ref).pipe(map(snaps => this.snapToData(snaps)));
     }
   }
 
@@ -221,39 +172,36 @@ export abstract class FireCollection<E extends DocumentData> {
   public getRef(
     ids?: string | string[] | Params | QueryConstraint[],
     params?: Params
+  ): undefined | Query<E> | CollectionReference<E> | DocumentReference<E> | DocumentReference<E>[]
+  public getRef(
+    ids?: string | string[] | Params | QueryConstraint[],
+    params?: Params
   ): undefined | Query<E> | CollectionReference<E> | DocumentReference<E> | DocumentReference<E>[] {
-    // Array of path
+    // Collection
+    if (!arguments.length) return this.firestore.getRef(this.path);
+    // Id is undefined or null
+    if (!ids) return undefined;
+    // List of Ref
     if (Array.isArray(ids) && (ids as any[]).every(isPathRef)) {
-      return (ids as string[]).map(id => this.getRef(id));
+      return this.firestore.getRef(ids as string[]); // (ids as string[]).map(id => this.getRef(id));
     }
-    // Path
-    if (isPathRef(ids)) {
-      assertPath(ids);
-      return ids.split('/').length % 2 === 0
-        ? doc(this.db, ids) as DocumentReference<E>
-        : collection(this.db, ids) as CollectionReference<E>;
-    }
+    // Ref
+    if (isPathRef(ids)) return this.firestore.getRef(ids);
 
+    // Merge params & path
     params = (!Array.isArray(ids) && typeof ids === 'object') ? ids : params;
     const path = pathWithParams(this.path, params);
 
-    // If subcollection path make sure the path is correctly built
-    assertPath(path);
-
     // Id
-    if (typeof ids === 'string') {
-      return doc(this.db, getDocPath(path, ids)) as DocumentReference<E>;
-    }
+    if (typeof ids === 'string') return this.firestore.getRef(getDocPath(path, ids));
 
     if (Array.isArray(ids)) {
-      // List of ids or paths
-      if (isIdList(ids)) return ids.map((id) => this.getRef(id, params));
+      // List of ids
+      if (isIdList(ids)) return this.firestore.getRef(ids.map((id) => getDocPath(path, id)));
       // List of constraints
-      if (params) return query(this.getRef(params), ...ids);  // Required for type safety
-      return query(this.getRef(), ...ids);
+      return this.firestore.getRef(path, ids);
     }
-
-    return collection(this.db, path) as CollectionReference<E>;
+    throw new Error('Unexpected params in "getRef".');
   }
 
 
@@ -265,12 +213,10 @@ export abstract class FireCollection<E extends DocumentData> {
     idOrQuery?: string | string[] | QueryConstraint[] | null,
   ): Promise<E | E[] | undefined> {
     if (!this.memorize) return;
-    // We do not support full clearCache with reload
-    if (!idOrQuery) return;
-    const ref = this.getRef(idOrQuery as any);
+    const ref = idOrQuery ? this.getRef(idOrQuery) : this.getRef();
     if (!ref) return;
     this.clearCache(ref);
-    return this.load(idOrQuery as any);
+    return this.load(idOrQuery);
   }
 
   /** Get the last content from the app (if value has been cached, it won't do a server request) */
@@ -279,11 +225,14 @@ export abstract class FireCollection<E extends DocumentData> {
   public async load(id?: string | null): Promise<E | undefined>;
   public async load(
     idOrQuery?: string | string[] | QueryConstraint[] | null,
+  ): Promise<E | E[] | undefined>
+  public async load(
+    idOrQuery?: string | string[] | QueryConstraint[] | null,
   ): Promise<E | E[] | undefined> {
     if (idOrQuery === null) return;
     if (arguments.length && typeof idOrQuery === 'undefined') return;
     // Force type to work
-    return this.valueChanges(idOrQuery as any).pipe(take(1)).toPromise() as any;
+    return this.valueChanges(idOrQuery).pipe(take(1)).toPromise();
   }
 
   /** Return the current value of the path from Firestore */
@@ -293,7 +242,8 @@ export abstract class FireCollection<E extends DocumentData> {
   public async getValue(idOrQuery?: null | string | string[] | QueryConstraint[]): Promise<E | E[] | undefined> {
     if (idOrQuery === null) return;
     if (arguments.length && typeof idOrQuery === 'undefined') return;
-    const ref = this.getRef(idOrQuery as any);
+    const ref = this.getRef(idOrQuery);
+    if (!ref) return;
     return this.getFromRef(ref);
   }
 
@@ -303,6 +253,9 @@ export abstract class FireCollection<E extends DocumentData> {
   public valueChanges(id?: string | null): Observable<E | undefined>;
   public valueChanges(
     idOrQuery?: string | string[] | QueryConstraint[] | null,
+  ): Observable<E | E[] | undefined>;
+  public valueChanges(
+    idOrQuery?: string | string[] | QueryConstraint[] | null,
   ): Observable<E | E[] | undefined> {
     // If there is an argument, and it's undefined, we don't query anything
     if (idOrQuery === null) return of(undefined);
@@ -310,7 +263,8 @@ export abstract class FireCollection<E extends DocumentData> {
 
     if (Array.isArray(idOrQuery) && !idOrQuery.length) return of([]);
 
-    const ref = this.getRef(idOrQuery as any);
+    const ref = this.getRef(idOrQuery);
+    if (!ref) return of(undefined);
     return this.fromRef(ref);
   }
 

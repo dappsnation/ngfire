@@ -1,9 +1,13 @@
+import { CollectionReference, DocumentReference, Query } from "firebase/firestore";
 import { Params } from "./types";
 
 export function exist<D>(doc: D | undefined | null): doc is D {
   return doc !== undefined && doc !== null;
 }
 
+export function isNotUndefined<D>(doc: D | undefined): doc is D {
+  return doc !== undefined;
+}
 
 ///////////////
 // TIMESTAMP //
@@ -18,6 +22,9 @@ export function exist<D>(doc: D | undefined | null): doc is D {
 //////////
 // PATH //
 //////////
+export function isDocPath(path: string) {
+  return path.split('/').length % 2 === 0;
+} 
 
 // Check if a string is a full path
 export function isPathRef(path?: any): path is string {
@@ -46,6 +53,11 @@ export function assertPath(path: string) {
   }
 }
 
+export function assertCollection(path: string) {
+  if (isDocPath(path)) {
+    throw new Error(`Expected collection path but got: ${path}`);
+  }
+}
 
 /**
  * Transform a path based on the params
@@ -69,3 +81,12 @@ export function pathWithParams(path: string, params?: Params): string {
     .join('/');
 }
 
+////////////////
+// REFERENCES //
+////////////////
+export function isQuery<E>(ref: CollectionReference<E> | DocumentReference<E> | Query<E>): ref is Query<E> {
+  return ref.type === 'query';
+}
+export function isCollectionRef<E>(ref: CollectionReference<E> | DocumentReference<E> | Query<E>): ref is CollectionReference<E> {
+  return ref.type === 'collection';
+}
