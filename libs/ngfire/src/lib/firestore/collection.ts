@@ -2,7 +2,7 @@
 import { inject, NgZone, PLATFORM_ID } from '@angular/core';
 import { Observable, of, combineLatest, from } from 'rxjs';
 import { map, take } from 'rxjs/operators';
-import { FIRESTORE } from '../firestore';
+import { FIRESTORE } from './tokens';
 import { writeBatch, runTransaction, doc, collection, Query, getDocs, getDoc, Timestamp, Transaction, DocumentSnapshot, FieldValue } from 'firebase/firestore';
 import type { DocumentData, CollectionReference, DocumentReference, QueryConstraint, QueryDocumentSnapshot, QuerySnapshot, WriteBatch } from 'firebase/firestore';
 import { fromRef } from '../operators';
