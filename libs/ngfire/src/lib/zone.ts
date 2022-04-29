@@ -27,6 +27,7 @@ export class ɵZoneScheduler implements SchedulerLike {
 }
 
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 function noop() {}
 
 class BlockUntilFirstOperator<T> implements Operator<T, T> {
