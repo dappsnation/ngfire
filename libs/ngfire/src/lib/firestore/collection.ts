@@ -175,33 +175,34 @@ export abstract class FireCollection<E extends DocumentData> {
   ): undefined | Query<E> | CollectionReference<E> | DocumentReference<E> | DocumentReference<E>[]
   public getRef(
     ids?: string | string[] | Params | QueryConstraint[],
-    params?: Params
+    parameters?: Params
   ): undefined | Query<E> | CollectionReference<E> | DocumentReference<E> | DocumentReference<E>[] {
     // Collection
     if (!arguments.length) return this.firestore.getRef(this.path);
     // Id is undefined or null
     if (!ids) return undefined;
-    // List of Ref
-    if (Array.isArray(ids) && (ids as any[]).every(isPathRef)) {
-      return this.firestore.getRef(ids as string[]); // (ids as string[]).map(id => this.getRef(id));
-    }
-    // Ref
-    if (isPathRef(ids)) return this.firestore.getRef(ids);
-
-    // Merge params & path
-    params = (!Array.isArray(ids) && typeof ids === 'object') ? ids : params;
-    const path = pathWithParams(this.path, params);
-
-    // Id
-    if (typeof ids === 'string') return this.firestore.getRef(getDocPath(path, ids));
-
+    
     if (Array.isArray(ids)) {
+      // List of ref
+      if ((ids as any[]).every(isPathRef)) return this.firestore.getRef(ids as string[]);
+      
+      const path = pathWithParams(this.path, parameters);
       // List of ids
       if (isIdList(ids)) return this.firestore.getRef(ids.map((id) => getDocPath(path, id)));
       // List of constraints
       return this.firestore.getRef(path, ids);
     }
-    throw new Error('Unexpected params in "getRef".');
+
+    if (typeof ids === 'string') {
+      // Ref
+      if (isPathRef(ids)) return this.firestore.getRef(ids);
+      // Id
+      const path = pathWithParams(this.path, parameters);
+      return this.firestore.getRef(getDocPath(path, ids));
+    }
+
+    // Subcollection
+    return this.firestore.getRef(pathWithParams(this.path, ids));
   }
 
 
