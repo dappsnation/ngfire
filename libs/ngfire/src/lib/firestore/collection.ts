@@ -240,9 +240,10 @@ export abstract class FireCollection<E extends DocumentData> {
   public async getValue(query?: QueryConstraint[]): Promise<E[]>;
   public async getValue(id?: string | null): Promise<E | undefined>;
   public async getValue(idOrQuery?: null | string | string[] | QueryConstraint[]): Promise<E | E[] | undefined> {
+    // If there is an argument, and it's null, we don't query anything
     if (idOrQuery === null) return;
     if (arguments.length && typeof idOrQuery === 'undefined') return;
-    const ref = this.getRef(idOrQuery);
+    const ref = idOrQuery ? this.getRef(idOrQuery): this.getRef();
     if (!ref) return;
     return this.getFromRef(ref);
   }
@@ -257,13 +258,13 @@ export abstract class FireCollection<E extends DocumentData> {
   public valueChanges(
     idOrQuery?: string | string[] | QueryConstraint[] | null,
   ): Observable<E | E[] | undefined> {
-    // If there is an argument, and it's undefined, we don't query anything
+    // If there is an argument, and it's null, we don't query anything
     if (idOrQuery === null) return of(undefined);
     if (arguments.length && typeof idOrQuery === 'undefined') return of(undefined);
 
     if (Array.isArray(idOrQuery) && !idOrQuery.length) return of([]);
 
-    const ref = this.getRef(idOrQuery);
+    const ref = idOrQuery ? this.getRef(idOrQuery): this.getRef();
     if (!ref) return of(undefined);
     return this.fromRef(ref);
   }
