@@ -433,7 +433,7 @@ export abstract class FireCollection<E extends DocumentData> {
           const snapshot = await tx.get(ref);
           const doc = this.fromFirestore(snapshot);
           if (doc && stateFunction) {
-            const data = await stateFunction(Object.freeze(doc), tx);
+            const data = await stateFunction(doc, tx);
             const result = await this.toFirestore(data, 'update');
             tx.update(ref, result);
             if (this.onUpdate) {
@@ -449,7 +449,7 @@ export abstract class FireCollection<E extends DocumentData> {
       const { write = this.batch() } = options;
       const refs: DocumentReference<E>[] = [];
       const operations = ids.map(async (docId) => {
-        const doc = Object.freeze(getData(docId));
+        const doc = getData(docId);
         if (!docId) {
           throw new Error(`Document should have an unique id to be updated, but none was found in ${doc}`);
         }
