@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { inject, NgZone, PLATFORM_ID } from '@angular/core';
-import { Observable, of, combineLatest, from } from 'rxjs';
-import { map, take } from 'rxjs/operators';
-import { FIRESTORE } from '../firestore';
+import { FIRESTORE } from './tokens';
 import { writeBatch, runTransaction, doc, collection, Query, getDocs, getDoc, Timestamp, Transaction, DocumentSnapshot, FieldValue } from 'firebase/firestore';
 import type { DocumentData, CollectionReference, DocumentReference, QueryConstraint, QueryDocumentSnapshot, QuerySnapshot, WriteBatch } from 'firebase/firestore';
 import { fromRef } from '../operators';
 import { WriteOptions, UpdateCallback, MetaDocument, Params, FireEntity, DeepKeys } from '../types';
 import { isIdList, isNotUndefined, isPathRef, isQuery, pathWithParams } from '../utils';
+import { Observable, of, combineLatest, from, firstValueFrom } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { isPlatformServer } from '@angular/common';
 import { keepUnstableUntilFirst } from '../zone';
@@ -45,18 +45,18 @@ export function toDate<D>(target: D): D {
 
 export abstract class FireCollection<E extends DocumentData> {
   private getFirestore = inject(FIRESTORE);
-  private platformId = inject(PLATFORM_ID);
-  private zone = inject(NgZone);
-  private firestore = inject(FirestoreService);
+  protected platformId = inject(PLATFORM_ID);
+  protected zone = inject(NgZone);
+  protected firestore = inject(FirestoreService);
   protected abstract readonly path: string;
   protected idKey: DeepKeys<E> = 'id' as any;
   // If true, will store the document id (IdKey) onto the document
   protected storeId = false;
   protected memorize = false;
 
-  protected onCreate?(entity: E, options: WriteOptions): any;
-  protected onUpdate?(entity: FireEntity<E>, options: WriteOptions): any;
-  protected onDelete?(id: string, options: WriteOptions): any;
+  protected onCreate?(entity: E, options: WriteOptions): unknown;
+  protected onUpdate?(entity: FireEntity<E>, options: WriteOptions): unknown;
+  protected onDelete?(id: string, options: WriteOptions): unknown;
 
 
   protected get db() {
@@ -145,7 +145,7 @@ export abstract class FireCollection<E extends DocumentData> {
     ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>
   ): Observable<undefined | E | E[]> {
     if (isPlatformServer(this.platformId)) {
-      return this.zone.runOutsideAngular(() => from(this.getFromRef(ref as any))).pipe(
+      return this.zone.runOutsideAngular(() => from(this.getFromRef(ref))).pipe(
         keepUnstableUntilFirst(this.zone),
       );
     }
@@ -175,33 +175,34 @@ export abstract class FireCollection<E extends DocumentData> {
   ): undefined | Query<E> | CollectionReference<E> | DocumentReference<E> | DocumentReference<E>[]
   public getRef(
     ids?: string | string[] | Params | QueryConstraint[],
-    params?: Params
+    parameters?: Params
   ): undefined | Query<E> | CollectionReference<E> | DocumentReference<E> | DocumentReference<E>[] {
     // Collection
     if (!arguments.length) return this.firestore.getRef(this.path);
     // Id is undefined or null
     if (!ids) return undefined;
-    // List of Ref
-    if (Array.isArray(ids) && (ids as any[]).every(isPathRef)) {
-      return this.firestore.getRef(ids as string[]); // (ids as string[]).map(id => this.getRef(id));
-    }
-    // Ref
-    if (isPathRef(ids)) return this.firestore.getRef(ids);
-
-    // Merge params & path
-    params = (!Array.isArray(ids) && typeof ids === 'object') ? ids : params;
-    const path = pathWithParams(this.path, params);
-
-    // Id
-    if (typeof ids === 'string') return this.firestore.getRef(getDocPath(path, ids));
-
+    
     if (Array.isArray(ids)) {
+      // List of ref
+      if ((ids as any[]).every(isPathRef)) return this.firestore.getRef(ids as string[]);
+      
+      const path = pathWithParams(this.path, parameters);
       // List of ids
       if (isIdList(ids)) return this.firestore.getRef(ids.map((id) => getDocPath(path, id)));
       // List of constraints
       return this.firestore.getRef(path, ids);
     }
-    throw new Error('Unexpected params in "getRef".');
+
+    if (typeof ids === 'string') {
+      // Ref
+      if (isPathRef(ids)) return this.firestore.getRef(ids);
+      // Id
+      const path = pathWithParams(this.path, parameters);
+      return this.firestore.getRef(getDocPath(path, ids));
+    }
+
+    // Subcollection
+    return this.firestore.getRef(pathWithParams(this.path, ids));
   }
 
 
@@ -211,12 +212,13 @@ export abstract class FireCollection<E extends DocumentData> {
   public async reload(id?: string | null): Promise<E | undefined>;
   public async reload(
     idOrQuery?: string | string[] | QueryConstraint[] | null,
-  ): Promise<E | E[] | undefined> {
+  ): Promise<E | E[] | undefined>
+  public async reload(): Promise<E | E[] | undefined> {
     if (!this.memorize) return;
-    const ref = idOrQuery ? this.getRef(idOrQuery) : this.getRef();
+    const ref = this.getRef(...arguments);
     if (!ref) return;
     this.clearCache(ref);
-    return this.load(idOrQuery);
+    return this.load(...arguments);
   }
 
   /** Get the last content from the app (if value has been cached, it won't do a server request) */
@@ -226,23 +228,17 @@ export abstract class FireCollection<E extends DocumentData> {
   public async load(
     idOrQuery?: string | string[] | QueryConstraint[] | null,
   ): Promise<E | E[] | undefined>
-  public async load(
-    idOrQuery?: string | string[] | QueryConstraint[] | null,
-  ): Promise<E | E[] | undefined> {
-    if (idOrQuery === null) return;
-    if (arguments.length && typeof idOrQuery === 'undefined') return;
-    // Force type to work
-    return this.valueChanges(idOrQuery).pipe(take(1)).toPromise();
+  public async load(): Promise<E | E[] | undefined> {
+    return firstValueFrom(this.valueChanges(...arguments));
   }
 
   /** Return the current value of the path from Firestore */
   public async getValue(ids?: string[]): Promise<E[]>;
   public async getValue(query?: QueryConstraint[]): Promise<E[]>;
   public async getValue(id?: string | null): Promise<E | undefined>;
-  public async getValue(idOrQuery?: null | string | string[] | QueryConstraint[]): Promise<E | E[] | undefined> {
-    if (idOrQuery === null) return;
-    if (arguments.length && typeof idOrQuery === 'undefined') return;
-    const ref = this.getRef(idOrQuery);
+  public async getValue(idOrQuery?: null | string | string[] | QueryConstraint[]): Promise<E | E[] | undefined>
+  public async getValue(): Promise<E | E[] | undefined> {
+    const ref = this.getRef(...arguments);
     if (!ref) return;
     return this.getFromRef(ref);
   }
@@ -257,13 +253,8 @@ export abstract class FireCollection<E extends DocumentData> {
   public valueChanges(
     idOrQuery?: string | string[] | QueryConstraint[] | null,
   ): Observable<E | E[] | undefined> {
-    // If there is an argument, and it's undefined, we don't query anything
-    if (idOrQuery === null) return of(undefined);
-    if (arguments.length && typeof idOrQuery === 'undefined') return of(undefined);
-
     if (Array.isArray(idOrQuery) && !idOrQuery.length) return of([]);
-
-    const ref = this.getRef(idOrQuery);
+    const ref = this.getRef(...arguments);
     if (!ref) return of(undefined);
     return this.fromRef(ref);
   }
@@ -432,7 +423,7 @@ export abstract class FireCollection<E extends DocumentData> {
           const snapshot = await tx.get(ref);
           const doc = this.fromFirestore(snapshot);
           if (doc && stateFunction) {
-            const data = await stateFunction(Object.freeze(doc), tx);
+            const data = await stateFunction(doc, tx);
             const result = await this.toFirestore(data, 'update');
             tx.update(ref, result);
             if (this.onUpdate) {
@@ -448,7 +439,7 @@ export abstract class FireCollection<E extends DocumentData> {
       const { write = this.batch() } = options;
       const refs: DocumentReference<E>[] = [];
       const operations = ids.map(async (docId) => {
-        const doc = Object.freeze(getData(docId));
+        const doc = getData(docId);
         if (!docId) {
           throw new Error(`Document should have an unique id to be updated, but none was found in ${doc}`);
         }

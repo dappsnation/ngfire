@@ -1,7 +1,7 @@
 import { inject, Injectable } from "@angular/core";
 import { collection, doc, DocumentData, DocumentSnapshot, query, queryEqual, QuerySnapshot, runTransaction, writeBatch } from 'firebase/firestore';
 import type { Transaction, CollectionReference, DocumentReference, Query, QueryConstraint } from 'firebase/firestore';
-import { FIRESTORE } from "../firestore";
+import { FIRESTORE } from "./tokens";
 import { assertCollection, assertPath, isDocPath, isQuery } from "../utils";
 import { Observable } from "rxjs";
 import { fromRef, shareWithDelay } from "../operators";

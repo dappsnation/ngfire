@@ -9,6 +9,7 @@
         "plugin:@angular-eslint/template/process-inline-templates"
       ],
       "rules": {
+        "prefer-rest-params": 0,
         "@angular-eslint/directive-selector": [
           "error",
           {

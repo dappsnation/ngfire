@@ -3,8 +3,10 @@ import type { QueryDocumentSnapshot, DocumentSnapshot, Query, QueryConstraint } 
 import { FireCollection, toDate } from "./collection";
 import { isIdList } from '../utils';
 import { Params } from '../types'
-import { Observable, of } from "rxjs";
-import { map, take } from "rxjs/operators";
+import { firstValueFrom, from, Observable, of } from "rxjs";
+import { map } from "rxjs/operators";
+import { isPlatformServer } from "@angular/common";
+import { keepUnstableUntilFirst } from "../zone";
 
 
 /** Get the params from a path */
@@ -36,10 +38,23 @@ export abstract class FireSubCollection<E> extends FireCollection<E> {
     }
   }
 
-  public getGroupRef(constraints?: QueryConstraint[]): Query<E> {
-    if (!constraints) return collectionGroup(this.db, this.groupId) as Query<E>;
-    return query(this.getGroupRef(), ...constraints);
+  public getGroupRef(constraints?: QueryConstraint[]): Query<E> | undefined {
+    const group = collectionGroup(this.db, this.groupId) as Query<E>;
+    if (!arguments.length) return group;
+    if (!constraints) return;
+    return query(group, ...constraints);
   }
+
+  /** Observable the content of group reference(s)  */
+  protected fromGroupRef(ref: Query<E>): Observable<E[]> {
+    if (isPlatformServer(this.platformId)) {
+      return this.zone.runOutsideAngular(() => from(this.getFromRef(ref))).pipe(
+        keepUnstableUntilFirst(this.zone),
+      );
+    }
+    return this.useCache(ref).pipe(map(snaps => this.snapToData(snaps)));
+  }
+
 
   /** Return the current value of the path from Firestore */
   public async getValue(ids?: string[], params?: Params): Promise<E[]>;
@@ -50,21 +65,17 @@ export abstract class FireSubCollection<E> extends FireCollection<E> {
     idOrQuery?: null | string | string[] | QueryConstraint[] | Params,
     params?: Params
   ): Promise<E | E[] | undefined> {
-    if (idOrQuery === null) return;
-    if (arguments.length && typeof idOrQuery === 'undefined') return;
+    // If array is empty
+    if (Array.isArray(idOrQuery) && !idOrQuery.length) return [];
 
     // Group query
     const isEmpty = arguments.length === 0;
     const isGroupQuery = arguments.length === 1 && Array.isArray(idOrQuery) && !isIdList(idOrQuery);
-    if (isEmpty || isGroupQuery) {
-      return this.getFromRef(this.getGroupRef(idOrQuery as undefined | QueryConstraint[]));
-    }
-
-    // If array is empty
-    if (Array.isArray(idOrQuery) && !idOrQuery.length) return [];
 
     // Collection Query
-    const ref = this.getRef(idOrQuery, params);
+    const ref = (isEmpty || isGroupQuery)
+      ? this.getGroupRef(...arguments)
+      : this.getRef(...arguments);
     if (!ref) return;
     return this.getFromRef(ref);
   }
@@ -78,17 +89,18 @@ export abstract class FireSubCollection<E> extends FireCollection<E> {
     idOrQuery?: null | string | string[] | QueryConstraint[] | Params,
     params?: Params
   ): Promise<E | E[] | undefined> {
-    if (!this.memorize) return;
-    if (!idOrQuery) return;
+    const isEmpty = arguments.length === 0;
     const isGroupQuery = arguments.length === 1 && Array.isArray(idOrQuery) && !isIdList(idOrQuery);
-    const ref = isGroupQuery
-      ? this.getGroupRef(idOrQuery)
-      : this.getRef(idOrQuery, params);
+    const ref = (isEmpty || isGroupQuery)
+      ? this.getGroupRef(...arguments)
+      : this.getRef(...arguments);
     if (!ref) return;
-    Array.isArray(ref)
-      ? ref.forEach(r => this.clearCache(r))
-      : this.clearCache(ref);
-    return this.load(idOrQuery, params);
+    if (this.memorize) {
+      Array.isArray(ref)
+        ? ref.forEach(r => this.clearCache(r))
+        : this.clearCache(ref);
+    }
+    return this.load(...arguments);
   }
   
 
@@ -101,13 +113,8 @@ export abstract class FireSubCollection<E> extends FireCollection<E> {
     idOrQuery?: string | string[] | QueryConstraint[] | Params,
     params?: Params
   ): Promise<E | E[] | undefined>;
-  public load(
-    idOrQuery?: string | string[] | QueryConstraint[] | Params,
-    params?: Params
-  ): Promise<E | E[] | undefined> {
-    if (arguments.length === 0) return this.valueChanges().pipe(take(1)).toPromise();
-    if (arguments.length === 1) return this.valueChanges(idOrQuery).pipe(take(1)).toPromise();
-    return this.valueChanges(idOrQuery, params).pipe(take(1)).toPromise();
+  public load(): Promise<E | E[] | undefined> {
+    return firstValueFrom(this.valueChanges(...arguments));
   }
 
   /** Return the current value of the path from Firestore */
@@ -123,19 +130,18 @@ export abstract class FireSubCollection<E> extends FireCollection<E> {
     idOrQuery?: string | string[] | QueryConstraint[] | Params,
     params?: Params
   ): Observable<E | E[] | undefined> {
-    // Group query
-    const isEmpty = arguments.length === 0;
-    const isGroupQuery = arguments.length === 1 && Array.isArray(idOrQuery) && !isIdList(idOrQuery);
-    if (isEmpty || isGroupQuery) {
-      const ref = this.getGroupRef(idOrQuery as undefined | QueryConstraint[]);
-      return this.useCache(ref).pipe(map(snaps => this.snapToData(snaps)));
-    }
-
     // If array is empty
     if (Array.isArray(idOrQuery) && !idOrQuery.length) return of([]);
+    
+    // Check if group query
+    const isEmpty = arguments.length === 0;
+    const isGroupQuery = arguments.length === 1 && Array.isArray(idOrQuery) && !isIdList(idOrQuery);
 
-    // Collection query
-    const ref = this.getRef(idOrQuery, params);
+    // Group or Collection Query
+    const ref = (isEmpty || isGroupQuery)
+      ? this.getGroupRef(...arguments)
+      : this.getRef(...arguments);
+
     if (!ref) return of(undefined);
     return this.fromRef(ref);
   }
