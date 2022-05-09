@@ -63,12 +63,21 @@ export abstract class FireCollection<E extends DocumentData> {
     return this.getFirestore();
   }
 
-  protected useCache(ref: DocumentReference<E>): Observable<DocumentSnapshot<E>>
-  protected useCache(ref: Query<E>): Observable<QuerySnapshot<E>>
-  protected useCache(ref: DocumentReference<E> | Query<E>): Observable<DocumentSnapshot<E> | QuerySnapshot<E>>   
-  protected useCache(ref: DocumentReference<E> | Query<E>): Observable<DocumentSnapshot<E> | QuerySnapshot<E>> {    
-    if (!this.memorize) return isQuery(ref) ? fromRef(ref) : fromRef(ref);
-    return this.firestore.fromMemory(ref);
+  protected useCache(ref: DocumentReference<E>): Observable<E>
+  protected useCache(ref: Query<E>): Observable<E[]>
+  protected useCache(ref: DocumentReference<E> | Query<E>): Observable<E | E[]>   
+  protected useCache(ref: DocumentReference<E> | Query<E>): Observable<E | E[]> {    
+    if (!this.memorize) return fromRef(ref as Query<E>).pipe(map(snap => this.snapToData(snap)));
+    const transfer = this.firestore.getTransfer(ref);
+    if (transfer) this.firestore.setState(ref, transfer)
+    const initial = this.firestore.getState(ref);
+    const result = this.firestore.fromMemory(ref).pipe(
+      map(snap => this.snapToData(snap)),
+      tap(state => this.firestore.setState(ref, state)),
+    );
+    return initial 
+      ? result.pipe(startWith(initial))
+      : result;
   }
 
   protected clearCache(refs: CollectionReference<E> | DocumentReference<E> | Query<E> | DocumentReference<E>[]) {
@@ -151,17 +160,13 @@ export abstract class FireCollection<E extends DocumentData> {
         keepUnstableUntilFirst(this.zone),
       );
     }
-    const transfer = this.firestore.getTransfer(ref);
-    let result: Observable<undefined | E | E[]>;
     if (Array.isArray(ref)) {
       if (!ref.length) return of([]);
       const queries = ref.map(r => this.useCache(r));
-      result = combineLatest(queries).pipe(map(snaps => this.snapToData(snaps)));
+      return combineLatest(queries);
     } else {
-      result = this.useCache(ref).pipe(map(snaps => this.snapToData(snaps)));
+      return this.useCache(ref);
     }
-    if (transfer) return result.pipe(startWith(transfer));
-    return result;
   }
 
   ///////////////

@@ -26,14 +26,15 @@ export class FirestoreService {
     return this.getFirestore();
   }
 
-  /** Keep cache for first value */
-  private setState<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>, value: Snapshot<E>) {
-    if (ref.type === 'document') {
-      const path = (value as DocumentSnapshot<E>).ref.path;
-      this.state[path] = value;
-    } else {
-      (value as QuerySnapshot<E>).forEach(snap => this.state[snap.ref.path] = value);
-    }
+  /** @internal Should only be used by FireCollection services */
+  setState<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>, value: E | E[]) {
+    if (isQuery(ref)) return;
+    this.state[ref.path] = value;
+  }
+
+  getState<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>): E | E[] | undefined {
+    if (isQuery(ref)) return;
+    return this.state[ref.path];
   }
 
   /** @internal Should only be used by FireCollection services */
@@ -47,10 +48,7 @@ export class FirestoreService {
         }
       }
       if (existing) return existing;
-      const observable = fromRef(ref).pipe(
-        tap(value => this.setState(ref, value)),
-        shareWithDelay()
-      );
+      const observable = fromRef(ref).pipe(shareWithDelay());
       this.memoryQuery.set(ref, observable);
       return this.memoryQuery.get(ref) as Observable<QuerySnapshot<E>>;
     } else {
@@ -58,32 +56,26 @@ export class FirestoreService {
       if (!this.memoryRef[path]) {
         this.memoryRef[path] = fromRef(ref).pipe(shareWithDelay());
       }
-      // If the doc is already in the state 
-      return defer(() => {
-        const initial = this.state[path];
-        if (initial) return this.memoryRef[path].pipe(startWith(initial));
-        return this.memoryRef[path]
-      });
+      return this.memoryRef[path] as Observable<Snapshot<E>>;
     }
   }
 
-  /** @internal Should only be used by FireCollection services */
+  /**
+   * @internal Should only be used by FireCollection services
+   * Get the transfer state for a specific ref and put it in the memory state
+   * Remove the reference to transfer state after first call
+   */
   getTransfer<E>(ref: DocumentReference<E>): E | undefined
-  getTransfer<E>(ref: DocumentReference<E>[] | CollectionReference<E> | Query<E>): E[] | undefined
-  getTransfer<E>(ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>): E | E[] | undefined
-  getTransfer<E>(ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>) {
+  getTransfer<E>(ref: CollectionReference<E> | Query<E>): E[] | undefined
+  getTransfer<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>): E[] | E | undefined
+  getTransfer<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>) {
     if (!this.transferState || !isPlatformBrowser(this.plateformId)) return;
-    if (Array.isArray(ref)) {
-      const value = ref.map(reference => this.getTransfer(reference));
-      return value.filter(exist).length ? value : undefined;
-    } else {
-      if (isQuery(ref)) return;
-      const key = makeStateKey<E>(ref.path);
-      if (!this.transferState.hasKey(key)) return;
-      const value = this.transferState.get(key, undefined);
-      this.transferState.remove(key);
-      return value;
-    }
+    if (isQuery(ref)) return;
+    const key = makeStateKey<E>(ref.path);
+    if (!this.transferState.hasKey(key)) return;
+    const value = this.transferState.get(key, undefined);
+    this.transferState.remove(key);
+    return value;
   }
 
   /** @internal Should only be used by FireCollection services */

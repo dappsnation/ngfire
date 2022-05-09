@@ -115,3 +115,22 @@ The service exposes an API to do most of common tasks:
 - `upsert`: add or update a document
 - `remove`: remove a document from the collection
 - `removeAll`: remove all documents from a collection
+
+
+## TransferState (SSR)
+`ngfire` supports state transfer from your server into the browser for Documents and Collections (not queries).
+
+To implement it you need to :
+1. Set `memorize: true` on the `FireCollection`
+2. Add `BrowserTransferStateModule` into your `app.module.ts`:
+```typescript
+@NgModule({
+  imports: [..., BrowserTransferStateModule]
+})
+```
+3. Add `ServerTransferStateModule` into your `app.server.module.ts`:
+```typescript
+@NgModule({
+  imports: [..., ServerTransferStateModule]
+})
+```
