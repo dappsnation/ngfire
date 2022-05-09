@@ -6,8 +6,8 @@ import type { DocumentData, CollectionReference, DocumentReference, QueryConstra
 import { fromRef } from '../operators';
 import { WriteOptions, UpdateCallback, MetaDocument, Params, FireEntity, DeepKeys } from '../types';
 import { isIdList, isNotUndefined, isPathRef, isQuery, pathWithParams } from '../utils';
-import { Observable, of, combineLatest, from, firstValueFrom } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of, combineLatest, from, firstValueFrom, startWith } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 
 import { isPlatformServer } from '@angular/common';
 import { keepUnstableUntilFirst } from '../zone';
@@ -108,6 +108,7 @@ export abstract class FireCollection<E extends DocumentData> {
     return doc(collection(this.db, '__')).id;
   }
 
+
   /** Get the content of the snapshot */
   protected snapToData(snap: DocumentSnapshot<E>): E;
   protected snapToData(snap: DocumentSnapshot<E>[]): E[];
@@ -130,8 +131,8 @@ export abstract class FireCollection<E extends DocumentData> {
     ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>
   ): Promise<undefined | E | E[]> {
     if (Array.isArray(ref)) return Promise.all(ref.map(getDoc)).then(snaps => this.snapToData(snaps));
-    if (ref.type === 'document') return getDoc(ref).then(snap => this.snapToData(snap));
-    return getDocs(ref).then(snap => this.snapToData(snap));
+    const snap = (ref.type === 'document') ? await getDoc(ref) : await getDocs(ref);
+    return this.snapToData(snap);
   }
 
   /** Observable the content of reference(s)  */
@@ -146,16 +147,21 @@ export abstract class FireCollection<E extends DocumentData> {
   ): Observable<undefined | E | E[]> {
     if (isPlatformServer(this.platformId)) {
       return this.zone.runOutsideAngular(() => from(this.getFromRef(ref))).pipe(
+        tap(value => this.firestore.setTransfer(ref, value)),
         keepUnstableUntilFirst(this.zone),
       );
     }
+    const transfer = this.firestore.getTransfer(ref);
+    let result: Observable<undefined | E | E[]>;
     if (Array.isArray(ref)) {
       if (!ref.length) return of([]);
       const queries = ref.map(r => this.useCache(r));
-      return combineLatest(queries).pipe(map(snaps => this.snapToData(snaps)));
+      result = combineLatest(queries).pipe(map(snaps => this.snapToData(snaps)));
     } else {
-      return this.useCache(ref).pipe(map(snaps => this.snapToData(snaps)));
+      result = this.useCache(ref).pipe(map(snaps => this.snapToData(snaps)));
     }
+    if (transfer) return result.pipe(startWith(transfer));
+    return result;
   }
 
   ///////////////
