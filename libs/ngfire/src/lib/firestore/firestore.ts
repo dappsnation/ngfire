@@ -1,9 +1,9 @@
-import { inject, Injectable, InjectFlags, PLATFORM_ID } from "@angular/core";
+import { inject, Injectable, InjectFlags, Injector, PLATFORM_ID } from "@angular/core";
 import { collection, doc, DocumentData, DocumentSnapshot, query, queryEqual, QuerySnapshot, runTransaction, writeBatch } from 'firebase/firestore';
 import type { Transaction, CollectionReference, DocumentReference, Query, QueryConstraint } from 'firebase/firestore';
 import { FIRESTORE } from "./tokens";
-import { assertCollection, assertPath, exist, isDocPath, isQuery } from "../utils";
-import { defer, Observable, startWith, tap } from "rxjs";
+import { assertCollection, assertPath, isDocPath, isQuery } from "../utils";
+import { Observable } from "rxjs";
 import { fromRef, shareWithDelay } from "../operators";
 import { makeStateKey, TransferState } from "@angular/platform-browser";
 import { isPlatformBrowser, isPlatformServer } from "@angular/common";
@@ -15,7 +15,7 @@ type Snapshot<E = DocumentData> = DocumentSnapshot<E> | QuerySnapshot<E>;
 export class FirestoreService {
   private memoryQuery: Map<Query, Observable<QuerySnapshot>> = new Map();
   private memoryRef: Record<string, Observable<Snapshot>> = {};
-  private getFirestore = inject(FIRESTORE);
+  private injector = inject(Injector);
   private plateformId = inject(PLATFORM_ID);
   /** Transfer state between server and  */
   private transferState = inject(TransferState, InjectFlags.Optional);
@@ -23,7 +23,7 @@ export class FirestoreService {
   private state: Record<string, any> = {};
 
   get db() {
-    return this.getFirestore();
+    return this.injector.get(FIRESTORE);
   }
 
   /** @internal Should only be used by FireCollection services */

@@ -4,7 +4,6 @@ import { FireCollection, toDate } from "./collection";
 import { isIdList } from '../utils';
 import { Params } from '../types'
 import { firstValueFrom, from, Observable, of } from "rxjs";
-import { map } from "rxjs/operators";
 import { isPlatformServer } from "@angular/common";
 import { keepUnstableUntilFirst } from "../zone";
 

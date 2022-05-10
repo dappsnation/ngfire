@@ -1,9 +1,8 @@
-import { inject, Injectable, InjectionToken, NgZone, PLATFORM_ID } from "@angular/core";
+import { inject, Injectable, InjectionToken, Injector, NgZone, PLATFORM_ID } from "@angular/core";
 import { isPlatformServer } from "@angular/common";
 import { doc, getDoc, writeBatch, runTransaction } from "firebase/firestore";
 import { Auth, getAuth, UserCredential, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, signInAnonymously, signInWithPopup, signInWithCustomToken, AuthProvider, User, getAdditionalUserInfo } from "firebase/auth";
 import { getConfig } from "./config";
-import { initializeApp } from "firebase/app";
 import { FIRESTORE } from "./firestore";
 import type { WriteBatch, DocumentSnapshot, DocumentReference, UpdateData } from 'firebase/firestore';
 import { user, fromRef } from './operators';
@@ -13,22 +12,18 @@ import { keepUnstableUntilFirst } from "./zone";
 import { toDate } from "./firestore/collection";
 import { filter, map, switchMap, take } from "rxjs/operators";
 import { from, Observable, of } from "rxjs";
+import { FIREBASE_APP } from "./app";
 
 const exist = <T>(v?: T | null): v is T => v !== null && v !== undefined;
 
-export const FIRE_AUTH = new InjectionToken<() => Auth>('Fire auth instance', {
+export const FIRE_AUTH = new InjectionToken<Auth>('Fire auth instance', {
   providedIn: 'root',
   factory: () => {
-    let auth: Auth;
     const config = getConfig();
-    return () => {
-      if (!auth) {
-        const app = initializeApp(config.options, config.options.appId);
-        auth = getAuth(app);
-        if (config.auth) config.auth(auth);
-      }
-      return auth;
-    };
+    const app = inject(FIREBASE_APP);
+    const auth = getAuth(app);
+    if (config.auth) config.auth(auth);
+    return auth;
   },
 });
 
@@ -77,7 +72,7 @@ export abstract class BaseFireAuth<Profile, Roles = undefined> {
   private memoProfile: Record<string, Observable<DocumentSnapshot<Profile>>> = {};
   private platformId = inject(PLATFORM_ID);
   protected getAuth = inject(FIRE_AUTH);
-  protected getFirestore = inject(FIRESTORE);
+  protected injector = inject(Injector);
   private zone = inject(NgZone);
   
   protected abstract path: string | undefined;
@@ -88,11 +83,11 @@ export abstract class BaseFireAuth<Profile, Roles = undefined> {
   protected abstract signout(): Promise<void>;
 
   protected get db() {
-    return this.getFirestore();
+    return this.injector.get(FIRESTORE);
   }
   
   get auth() {
-    return this.getAuth();
+    return this.injector.get(FIRE_AUTH);
   }
 
   get user() {

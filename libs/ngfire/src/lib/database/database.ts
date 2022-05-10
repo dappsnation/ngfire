@@ -1,4 +1,4 @@
-import { inject, Injectable } from "@angular/core";
+import { inject, Injectable, Injector } from "@angular/core";
 import { QueryConstraint, ref as dbRef, remove, set, update, query as queryWithConstraints, DataSnapshot } from 'firebase/database';
 import type { DatabaseReference, Query } from 'firebase/database';
 import { Observable } from "rxjs";
@@ -14,11 +14,11 @@ export function isContraintList(idsOrQuery: any[]): idsOrQuery is QueryConstrain
 
 @Injectable({ providedIn: 'root' })
 export class FireDatabase {
-  protected getDB = inject(DATABASE);
+  protected injector = inject(Injector);
   protected memory = new Map<Query, Observable<DataSnapshot>>();
 
   get db() {
-    return this.getDB();
+    return this.injector.get(DATABASE);
   }
 
   /** Get the reference of the document, collection or query */

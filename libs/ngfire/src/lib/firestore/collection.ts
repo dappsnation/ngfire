@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { inject, NgZone, PLATFORM_ID } from '@angular/core';
-import { FIRESTORE } from './tokens';
 import { writeBatch, runTransaction, doc, collection, Query, getDocs, getDoc, Timestamp, Transaction, DocumentSnapshot, FieldValue } from 'firebase/firestore';
 import type { DocumentData, CollectionReference, DocumentReference, QueryConstraint, QueryDocumentSnapshot, QuerySnapshot, WriteBatch } from 'firebase/firestore';
 import { fromRef } from '../operators';
@@ -44,7 +43,6 @@ export function toDate<D>(target: D): D {
 /////////////
 
 export abstract class FireCollection<E extends DocumentData> {
-  private getFirestore = inject(FIRESTORE);
   protected platformId = inject(PLATFORM_ID);
   protected zone = inject(NgZone);
   protected firestore = inject(FirestoreService);
@@ -60,7 +58,7 @@ export abstract class FireCollection<E extends DocumentData> {
 
 
   protected get db() {
-    return this.getFirestore();
+    return this.firestore.db;
   }
 
   protected useCache(ref: DocumentReference<E>): Observable<E>
