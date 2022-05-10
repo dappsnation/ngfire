@@ -20,7 +20,7 @@ export function fromRef<T=DocumentData>(ref: Query<T>, options?: SnapshotListenO
 export function fromRef<T=DocumentData>(
   ref: DocumentReference<T> | Query<T>,
   options: SnapshotListenOptions
-): Observable<any>
+): Observable<DocumentSnapshot<T>> | Observable<QuerySnapshot<T>>;
 export function fromRef<T=DocumentData>(
   ref: any,
   options: SnapshotListenOptions = DEFAULT_OPTIONS

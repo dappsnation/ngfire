@@ -1,10 +1,12 @@
-import { inject, Injectable } from "@angular/core";
+import { inject, Injectable, InjectFlags, PLATFORM_ID } from "@angular/core";
 import { collection, doc, DocumentData, DocumentSnapshot, query, queryEqual, QuerySnapshot, runTransaction, writeBatch } from 'firebase/firestore';
 import type { Transaction, CollectionReference, DocumentReference, Query, QueryConstraint } from 'firebase/firestore';
 import { FIRESTORE } from "./tokens";
-import { assertCollection, assertPath, isDocPath, isQuery } from "../utils";
-import { Observable } from "rxjs";
+import { assertCollection, assertPath, exist, isDocPath, isQuery } from "../utils";
+import { defer, Observable, startWith, tap } from "rxjs";
 import { fromRef, shareWithDelay } from "../operators";
+import { makeStateKey, TransferState } from "@angular/platform-browser";
+import { isPlatformBrowser, isPlatformServer } from "@angular/common";
 
 type Reference<E> = CollectionReference<E> | DocumentReference<E>;
 type Snapshot<E = DocumentData> = DocumentSnapshot<E> | QuerySnapshot<E>;
@@ -14,9 +16,25 @@ export class FirestoreService {
   private memoryQuery: Map<Query, Observable<QuerySnapshot>> = new Map();
   private memoryRef: Record<string, Observable<Snapshot>> = {};
   private getFirestore = inject(FIRESTORE);
+  private plateformId = inject(PLATFORM_ID);
+  /** Transfer state between server and  */
+  private transferState = inject(TransferState, InjectFlags.Optional);
+  /** Cache based state for document */
+  private state: Record<string, any> = {};
 
   get db() {
     return this.getFirestore();
+  }
+
+  /** @internal Should only be used by FireCollection services */
+  setState<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>, value: E | E[]) {
+    if (isQuery(ref)) return;
+    this.state[ref.path] = value;
+  }
+
+  getState<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>): E | E[] | undefined {
+    if (isQuery(ref)) return;
+    return this.state[ref.path];
   }
 
   /** @internal Should only be used by FireCollection services */
@@ -30,24 +48,64 @@ export class FirestoreService {
         }
       }
       if (existing) return existing;
-      this.memoryQuery.set(ref, fromRef(ref).pipe(shareWithDelay()));
+      const observable = fromRef(ref).pipe(shareWithDelay());
+      this.memoryQuery.set(ref, observable);
       return this.memoryQuery.get(ref) as Observable<QuerySnapshot<E>>;
     } else {
       const path = ref.path;
-      if (this.memoryRef[path]) return this.memoryRef[path] as Observable<Snapshot<E>>;
-      this.memoryRef[path] = fromRef(ref).pipe(shareWithDelay());
+      if (!this.memoryRef[path]) {
+        this.memoryRef[path] = fromRef(ref).pipe(shareWithDelay());
+      }
       return this.memoryRef[path] as Observable<Snapshot<E>>;
     }
   }
 
-  clearCache(path: string | string[] | Query) {
-    if (!path) return;
-    if (Array.isArray(path)) {
-      path.forEach(path => delete this.memoryRef[path]);
-    } else if (typeof path === 'string') {
-      delete this.memoryRef[path];
+  /**
+   * @internal Should only be used by FireCollection services
+   * Get the transfer state for a specific ref and put it in the memory state
+   * Remove the reference to transfer state after first call
+   */
+  getTransfer<E>(ref: DocumentReference<E>): E | undefined
+  getTransfer<E>(ref: CollectionReference<E> | Query<E>): E[] | undefined
+  getTransfer<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>): E[] | E | undefined
+  getTransfer<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>) {
+    if (!this.transferState || !isPlatformBrowser(this.plateformId)) return;
+    if (isQuery(ref)) return;
+    const key = makeStateKey<E>(ref.path);
+    if (!this.transferState.hasKey(key)) return;
+    const value = this.transferState.get(key, undefined);
+    this.transferState.remove(key);
+    return value;
+  }
+
+  /** @internal Should only be used by FireCollection services */
+  setTransfer<E>(ref: DocumentReference<E>, value?: E): void
+  setTransfer<E>(ref: DocumentReference<E>[] | CollectionReference<E> | Query<E>, value?: E[]): void
+  setTransfer<E>(ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>, value?: E | E[]): void
+  setTransfer<E>(ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>, value?: E | E[]) {
+    if (!value) return;
+    if (!this.transferState || !isPlatformServer(this.plateformId)) return;
+    if (Array.isArray(ref) && Array.isArray(value)) {
+      ref.forEach((reference, i) => this.setTransfer(reference, value[i]));
+    } else if (!Array.isArray(ref)) {
+      if (isQuery(ref)) return;
+      this.transferState.set(makeStateKey<E>(ref.path), value);
+    }
+  }
+
+
+  clearCache(paths: string | string[] | Query) {
+    if (!paths) return;
+    if (Array.isArray(paths)) {
+      for (const path of paths) {
+        delete this.memoryRef[path];
+        delete this.state[path];
+      }
+    } else if (typeof paths === 'string') {
+      delete this.memoryRef[paths];
+      delete this.state[paths];
     } else {
-      this.memoryQuery.delete(path);
+      this.memoryQuery.delete(paths);
     }
   }
 

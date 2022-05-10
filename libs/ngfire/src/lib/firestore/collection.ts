@@ -6,8 +6,8 @@ import type { DocumentData, CollectionReference, DocumentReference, QueryConstra
 import { fromRef } from '../operators';
 import { WriteOptions, UpdateCallback, MetaDocument, Params, FireEntity, DeepKeys } from '../types';
 import { isIdList, isNotUndefined, isPathRef, isQuery, pathWithParams } from '../utils';
-import { Observable, of, combineLatest, from, firstValueFrom } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of, combineLatest, from, firstValueFrom, startWith } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 
 import { isPlatformServer } from '@angular/common';
 import { keepUnstableUntilFirst } from '../zone';
@@ -63,12 +63,21 @@ export abstract class FireCollection<E extends DocumentData> {
     return this.getFirestore();
   }
 
-  protected useCache(ref: DocumentReference<E>): Observable<DocumentSnapshot<E>>
-  protected useCache(ref: Query<E>): Observable<QuerySnapshot<E>>
-  protected useCache(ref: DocumentReference<E> | Query<E>): Observable<DocumentSnapshot<E> | QuerySnapshot<E>>   
-  protected useCache(ref: DocumentReference<E> | Query<E>): Observable<DocumentSnapshot<E> | QuerySnapshot<E>> {    
-    if (!this.memorize) return isQuery(ref) ? fromRef(ref) : fromRef(ref);
-    return this.firestore.fromMemory(ref);
+  protected useCache(ref: DocumentReference<E>): Observable<E>
+  protected useCache(ref: Query<E>): Observable<E[]>
+  protected useCache(ref: DocumentReference<E> | Query<E>): Observable<E | E[]>   
+  protected useCache(ref: DocumentReference<E> | Query<E>): Observable<E | E[]> {    
+    if (!this.memorize) return fromRef(ref as Query<E>).pipe(map(snap => this.snapToData(snap)));
+    const transfer = this.firestore.getTransfer(ref);
+    if (transfer) this.firestore.setState(ref, transfer)
+    const initial = this.firestore.getState(ref);
+    const result = this.firestore.fromMemory(ref).pipe(
+      map(snap => this.snapToData(snap)),
+      tap(state => this.firestore.setState(ref, state)),
+    );
+    return initial 
+      ? result.pipe(startWith(initial))
+      : result;
   }
 
   protected clearCache(refs: CollectionReference<E> | DocumentReference<E> | Query<E> | DocumentReference<E>[]) {
@@ -108,6 +117,7 @@ export abstract class FireCollection<E extends DocumentData> {
     return doc(collection(this.db, '__')).id;
   }
 
+
   /** Get the content of the snapshot */
   protected snapToData(snap: DocumentSnapshot<E>): E;
   protected snapToData(snap: DocumentSnapshot<E>[]): E[];
@@ -130,8 +140,8 @@ export abstract class FireCollection<E extends DocumentData> {
     ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>
   ): Promise<undefined | E | E[]> {
     if (Array.isArray(ref)) return Promise.all(ref.map(getDoc)).then(snaps => this.snapToData(snaps));
-    if (ref.type === 'document') return getDoc(ref).then(snap => this.snapToData(snap));
-    return getDocs(ref).then(snap => this.snapToData(snap));
+    const snap = (ref.type === 'document') ? await getDoc(ref) : await getDocs(ref);
+    return this.snapToData(snap);
   }
 
   /** Observable the content of reference(s)  */
@@ -146,15 +156,16 @@ export abstract class FireCollection<E extends DocumentData> {
   ): Observable<undefined | E | E[]> {
     if (isPlatformServer(this.platformId)) {
       return this.zone.runOutsideAngular(() => from(this.getFromRef(ref))).pipe(
+        tap(value => this.firestore.setTransfer(ref, value)),
         keepUnstableUntilFirst(this.zone),
       );
     }
     if (Array.isArray(ref)) {
       if (!ref.length) return of([]);
       const queries = ref.map(r => this.useCache(r));
-      return combineLatest(queries).pipe(map(snaps => this.snapToData(snaps)));
+      return combineLatest(queries);
     } else {
-      return this.useCache(ref).pipe(map(snaps => this.snapToData(snaps)));
+      return this.useCache(ref);
     }
   }
 

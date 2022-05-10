@@ -52,7 +52,7 @@ export abstract class FireSubCollection<E> extends FireCollection<E> {
         keepUnstableUntilFirst(this.zone),
       );
     }
-    return this.useCache(ref).pipe(map(snaps => this.snapToData(snaps)));
+    return this.useCache(ref);
   }
 
 
