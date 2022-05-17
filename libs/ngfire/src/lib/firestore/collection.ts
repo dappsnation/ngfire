@@ -85,7 +85,7 @@ export abstract class FireCollection<E extends DocumentData> {
   }
 
   /** Function triggered when adding/updating data to firestore */
-  protected toFirestore<T extends E = E>(entity: FireEntity<T>, actionType: 'add' | 'update'): any | Promise<any> {
+  protected toFirestore(entity: FireEntity<E>, actionType: 'add' | 'update'): any | Promise<any> {
     if (actionType === 'add') {
       const _meta: MetaDocument = { createdAt: new Date(), modifiedAt: new Date() };
       return { _meta, ...entity };
@@ -95,7 +95,7 @@ export abstract class FireCollection<E extends DocumentData> {
   }
 
   /** Function triggered when getting data from firestore */
-  protected fromFirestore<T extends E = E>(snapshot: DocumentSnapshot<T> | QueryDocumentSnapshot<T>): T | undefined {
+  protected fromFirestore(snapshot: DocumentSnapshot<E> | QueryDocumentSnapshot<E>): E | undefined {
     if (snapshot.exists()) {
       return { ...toDate(snapshot.data()), [this.idKey]: snapshot.id };
     } else {
@@ -432,7 +432,7 @@ export abstract class FireCollection<E extends DocumentData> {
           const snapshot = await tx.get(ref);
           const doc = this.fromFirestore(snapshot);
           if (doc && stateFunction) {
-            const data = await stateFunction(doc, tx);
+            const data = await stateFunction(doc as T, tx);
             const result = await this.toFirestore(data, 'update');
             tx.update(ref, result);
             if (this.onUpdate) {

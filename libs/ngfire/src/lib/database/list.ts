@@ -47,7 +47,7 @@ export abstract class FireList<E> {
   protected idKey?: keyof E;
   protected pathKey?: keyof E;
 
-  protected fromDatabase<T extends E = E>(snap: DataSnapshot): T | null {
+  protected fromDatabase(snap: DataSnapshot): E | null {
     if (!snap.exists()) return null;
     const value = snap.val();
     
@@ -58,7 +58,7 @@ export abstract class FireList<E> {
     return toDate(value, dateKeys);
   }
 
-  protected toDatabase<T extends E = E>(doc: Partial<T>, actionType: 'add' | 'update') {
+  protected toDatabase(doc: Partial<E>, actionType: 'add' | 'update') {
     return fromDate(doc); 
   }
 
@@ -68,10 +68,10 @@ export abstract class FireList<E> {
   private toData<T extends E = E>(snaps: DataSnapshot | DataSnapshot[] | null, options: ToDataOptions): T | T[] | null {
     if (!snaps) return null;
     if (Array.isArray(snaps)) return snaps.map(snap => this.toData<T>(snap, { isList: false })).filter(exist);
-    if (!options.isList) return this.fromDatabase<T>(snaps);
+    if (!options.isList) return this.fromDatabase(snaps) as any;
     const docs: (T | null)[] = [];
     // forEach cancels when return value is "true". So I return "false"
-    snaps.forEach(snap => !docs.push(this.fromDatabase(snap)));
+    snaps.forEach(snap => !docs.push(this.fromDatabase(snap) as any));
     return docs.filter(exist);
   }
 
