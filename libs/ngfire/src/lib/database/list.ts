@@ -9,6 +9,16 @@ import { FireDatabase } from "./database";
 import { serverTimestamp } from 'firebase/database';
 import { fromDate, toDate } from "./utils";
 
+interface ToDataOptions {
+  isList: boolean;
+}
+
+function isListQuery(query?: string | string[] | QueryConstraint[] | Params) {
+  if (typeof query === 'string') return false;
+  if (Array.isArray(query) && isIdList(query)) return false;
+  return true;
+}
+
 
 function toKey(value: unknown) {
   if (typeof value === 'string') return value;
@@ -52,13 +62,13 @@ export abstract class FireList<T> {
     return fromDate(doc); 
   }
 
-  private toData(snaps: DataSnapshot | null): T | null
-  private toData(snaps: DataSnapshot[]): T[]
-  private toData(snaps: DataSnapshot | DataSnapshot[] | null): T | T[] | null
-  private toData(snaps: DataSnapshot | DataSnapshot[] | null): T | T[] | null {
+  private toData(snaps: DataSnapshot | null, options: ToDataOptions): T | null
+  private toData(snaps: DataSnapshot[], options: ToDataOptions): T[]
+  private toData(snaps: DataSnapshot | DataSnapshot[] | null, options: ToDataOptions): T | T[] | null
+  private toData(snaps: DataSnapshot | DataSnapshot[] | null, options: ToDataOptions): T | T[] | null {
     if (!snaps) return null;
-    if (Array.isArray(snaps)) return snaps.map(snap => this.toData(snap)).filter(exist);
-    if (!snaps.size) return this.fromDatabase(snaps);
+    if (Array.isArray(snaps)) return snaps.map(snap => this.toData(snap, { isList: false })).filter(exist);
+    if (!options.isList) return this.fromDatabase(snaps);
     const docs: (T | null)[] = [];
     // forEach cancels when return value is "true". So I return "false"
     snaps.forEach(snap => !docs.push(this.fromDatabase(snap)));
@@ -124,7 +134,7 @@ export abstract class FireList<T> {
   valueChanges(query?: string | string[] | QueryConstraint[] | Params, params?: Params): Observable<T | T[] | null> {
     if (arguments.length && !query) return of(null);
     return this.fromQuery(query, params).pipe(
-      map(snap => this.toData(snap)),
+      map(snap => this.toData(snap, { isList: isListQuery(query) })),
     );
   }
 
@@ -133,9 +143,10 @@ export abstract class FireList<T> {
   getValue(key: string, params?: Params): Promise<T | null>
   getValue(keys: string[], params?: Params): Promise<T[]>
   getValue(constraints: QueryConstraint[], params?: Params): Promise<T[]>
-  getValue(query?: string | string[] | QueryConstraint[] | Params, params?: Params): Promise<T | T[] | null> {
+  async getValue(query?: string | string[] | QueryConstraint[] | Params, params?: Params): Promise<T | T[] | null> {
     if (arguments.length && !query) return Promise.resolve(null);
-    return this.getQuery(query, params).then(snap => this.toData(snap));
+    const snap = await this.getQuery(query, params)
+    return this.toData(snap, { isList: isListQuery(query) });
   }
 
   add(value: Partial<T>, params?: Params) {

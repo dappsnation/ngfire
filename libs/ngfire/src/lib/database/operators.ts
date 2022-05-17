@@ -19,6 +19,6 @@ export function fromQuery(query: Query): Observable<DataSnapshot> {
       // Ensures subscribe on observable is async. This handles
       // a quirk in the SDK where on/once callbacks can happen
       // synchronously.
-      delay(0),
+      delay(0)
   );
 }
