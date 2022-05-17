@@ -5,7 +5,7 @@ import type { FirebaseOptions } from 'firebase/app';
 import type { Auth } from "firebase/auth";
 import type { Firestore, FirestoreSettings } from 'firebase/firestore';
 import type { Database } from "firebase/database";
-import type { AnalyticsSettings } from "firebase/analytics";
+import type { Analytics, AnalyticsSettings } from "firebase/analytics";
 
 interface FirebaseConfig {
   options: FirebaseOptions,
@@ -14,6 +14,7 @@ interface FirebaseConfig {
   storage?: (storage: FirebaseStorage) => void,
   functions?: (functions: Functions) => void,
   database?: (db: Database) => void,
+  analytics?: (analytics: Analytics) => void,
 }
 
 export const FIREBASE_CONFIG = new InjectionToken<FirebaseConfig>('Firebase Config');
