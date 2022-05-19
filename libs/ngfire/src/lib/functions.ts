@@ -1,32 +1,27 @@
-import { inject, Injectable, InjectFlags, InjectionToken } from "@angular/core";
+import { inject, Injectable, InjectFlags, InjectionToken, Injector } from "@angular/core";
 import { getConfig, REGION_OR_DOMAIN } from "./config";
-import { initializeApp } from "firebase/app";
 import { getFunctions, Functions, httpsCallable, HttpsCallable, HttpsCallableOptions } from "firebase/functions";
+import { FIREBASE_APP } from "./app";
 
-export const CLOUD_FUNCTIONS = new InjectionToken<() => Functions>('Firebase cloud functions', {
+export const CLOUD_FUNCTIONS = new InjectionToken<Functions>('Firebase cloud functions', {
   providedIn: 'root',
   factory: () => {
-    let functions: Functions;
-    const regionOrDomain = inject(REGION_OR_DOMAIN, InjectFlags.Optional);
     const config = getConfig();
-    return () => {
-      if (!functions) {
-        const app = initializeApp(config.options, config.options.appId);
-        functions = getFunctions(app, regionOrDomain ?? undefined);
-        if (config.functions) config.functions(functions);
-      }
-      return functions;
-    }
+    const regionOrDomain = inject(REGION_OR_DOMAIN, InjectFlags.Optional);
+    const app = inject(FIREBASE_APP);
+    const functions = getFunctions(app, regionOrDomain ?? undefined);
+    if (config.functions) config.functions(functions);
+    return functions;
   },
 });
 
 @Injectable({ providedIn: 'root' })
 export class CallableFunctions {
-  private getFunctions = inject(CLOUD_FUNCTIONS);
+  private injector = inject(Injector);
   private callables: Record<string, HttpsCallable> = {};
 
   protected get function() {
-    return this.getFunctions();
+    return this.injector.get(CLOUD_FUNCTIONS);
   }
 
   prepare<I, O>(name: string): (data: I) => Promise<O> {
