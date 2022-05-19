@@ -11,7 +11,7 @@ import { shareWithDelay } from "./operators";
 import { keepUnstableUntilFirst } from "./zone";
 import { toDate } from "./firestore/collection";
 import { filter, map, switchMap, take } from "rxjs/operators";
-import { from, Observable, of } from "rxjs";
+import { firstValueFrom, from, Observable, of } from "rxjs";
 import { FIREBASE_APP } from "./app";
 
 const exist = <T>(v?: T | null): v is T => v !== null && v !== undefined;
@@ -192,7 +192,7 @@ export abstract class BaseFireAuth<Profile, Roles = undefined> {
 
   /** Return current user. Only return when auth has emit */
   awaitUser() {
-    return this.user$.pipe(take(1)).toPromise();
+    return firstValueFrom(this.user$);
   }
 
   /** Get the current user Profile from Firestore */

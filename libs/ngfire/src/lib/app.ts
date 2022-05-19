@@ -6,7 +6,7 @@ export const FIREBASE_APP = new InjectionToken<FirebaseApp>('Firebase applicatio
   providedIn: 'root',
   factory: () => {
     const config = inject(FIREBASE_CONFIG);
-    return initializeApp(config.options);
+    return initializeApp(config.options, config.options.appId);
   },
 });
 

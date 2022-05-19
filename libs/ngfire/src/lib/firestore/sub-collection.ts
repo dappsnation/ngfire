@@ -25,7 +25,7 @@ export abstract class FireSubCollection<E> extends FireCollection<E> {
   }
 
   /** Function triggered when getting data from firestore */
-  protected fromFirestore<T extends E = E>(snapshot: DocumentSnapshot<T> | QueryDocumentSnapshot<T>): T | undefined {
+  protected fromFirestore(snapshot: DocumentSnapshot<E> | QueryDocumentSnapshot<E>): E | undefined {
     if (snapshot.exists()) {
       return {
         ...toDate(snapshot.data()),
