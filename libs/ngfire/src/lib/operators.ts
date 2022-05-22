@@ -57,7 +57,7 @@ export function user(auth: Auth): Observable<User|null> {
  * @note code based on shareReplay of rxjs v6.6.7: https://github.com/ReactiveX/rxjs/blob/6.6.7/src/internal/operators/shareReplay.ts
  * @param delay Delay in ms to wait before unsubscribing
  */
-export function shareWithDelay<T>(delay: number = 100): MonoTypeOperatorFunction<T> {
+function shareWithDelay<T>(delay: number = 100): MonoTypeOperatorFunction<T> {
   let subject: ReplaySubject<T> | undefined;
   let subscription: Subscription | undefined;
   let refCount = 0;

@@ -67,15 +67,13 @@ export abstract class FireCollection<E extends DocumentData> {
   protected useCache<T extends E>(ref: DocumentReference<T> | Query<T>): Observable<T | T[]> {    
     if (!this.memorize) return fromRef(ref as Query<T>).pipe(map(snap => this.snapToData(snap)));
     const transfer = this.firestore.getTransfer(ref);
-    if (transfer) this.firestore.setState(ref, transfer)
     const initial = this.firestore.getState(ref);
-    const result = this.firestore.fromMemory(ref).pipe(
-      map(snap => this.snapToData(snap)),
-      tap(state => this.firestore.setState(ref, state)),
+    const snap$ = this.firestore.fromMemory(ref).pipe(
+      tap(snap => this.firestore.setState(ref, snap))
     );
-    return initial 
-      ? result.pipe(startWith(initial))
-      : result;
+    if (transfer) return snap$.pipe(map(snap => this.snapToData(snap)), startWith(transfer));
+    if (initial) return snap$.pipe(startWith(initial), map(snap => this.snapToData(snap)));
+    return snap$.pipe(map(snap => this.snapToData(snap)));
   }
 
   protected clearCache<T extends E>(refs: CollectionReference<T> | DocumentReference<T> | Query<T> | DocumentReference<T>[]) {
