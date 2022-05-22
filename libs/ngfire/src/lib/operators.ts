@@ -99,19 +99,21 @@ export function shareWithDelay<T>(delay: number = 100): MonoTypeOperatorFunction
       innerSub = subject.subscribe(this);
     }
 
+    const checkReset = () => {
+      if (subscription && !isComplete && refCount === 0) {
+        subscription.unsubscribe();
+        subscription = undefined;
+        subject = undefined;
+      }
+    }
+
     this.add(() => {
       refCount--;
       innerSub?.unsubscribe();
       innerSub = undefined;
 
       // await some ms before unsubscribing
-      setTimeout(() => {
-        if (subscription && !isComplete && refCount === 0) {
-          subscription.unsubscribe();
-          subscription = undefined;
-          subject = undefined;
-        }
-      }, delay);
+      delay ? setTimeout(checkReset, delay) : checkReset();
     });
   }
 

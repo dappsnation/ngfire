@@ -49,22 +49,15 @@ export class FirestoreService {
         }
       }
       if (existing) return existing;
-      // Firestore will return a part of the query from cache before returning the whole query
-      // Because of the unsubscription delay, it can create partial result. So let's ignore them.
-      // TODO: check how to use native cache instead of recreating it
-      const observable = fromRef(ref, { includeMetadataChanges: true }).pipe(
-        filter(snap => !snap.metadata.fromCache),
-        shareWithDelay()
-      );
+      // We remove delay because firestore cache can create side effect when active onSnapshot overlap
+      // TODO: check how to leverage native cache from JS sdk
+      const observable = fromRef(ref).pipe(shareWithDelay(0));
       this.memoryQuery.set(ref, observable);
       return observable;
     } else {
       const path = ref.path;
       if (!this.memoryRef[path]) {
-        this.memoryRef[path] = fromRef(ref, { includeMetadataChanges: true }).pipe(
-          filter(snap => !snap.metadata.fromCache),
-          shareWithDelay()
-        );
+        this.memoryRef[path] = fromRef(ref).pipe(shareWithDelay(0));
       }
       return this.memoryRef[path] as Observable<Snapshot<E>>;
     }
