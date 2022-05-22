@@ -5,12 +5,11 @@ import { Auth, getAuth, UserCredential, createUserWithEmailAndPassword, signInWi
 import { getConfig } from "./config";
 import { FIRESTORE } from "./firestore";
 import type { WriteBatch, DocumentSnapshot, DocumentReference, UpdateData } from 'firebase/firestore';
-import { user, fromRef } from './operators';
+import { user, fromRef, shareWithDelay } from './operators';
 import { AtomicWrite, MetaDocument, UpdateCallback } from "./types";
-import { shareWithDelay } from "./operators";
 import { keepUnstableUntilFirst } from "./zone";
 import { toDate } from "./firestore/collection";
-import { filter, map, switchMap, take } from "rxjs/operators";
+import { filter, map, switchMap, shareReplay, tap } from "rxjs/operators";
 import { firstValueFrom, from, Observable, of } from "rxjs";
 import { FIREBASE_APP } from "./app";
 
@@ -78,7 +77,7 @@ export abstract class BaseFireAuth<Profile, Roles = undefined> {
   protected abstract path: string | undefined;
   protected idKey = 'id';
   protected verificationUrl?: string;
-
+  
   protected abstract signin(...arg: any[]): Promise<UserCredential>;
   protected abstract signout(): Promise<void>;
 
@@ -96,7 +95,7 @@ export abstract class BaseFireAuth<Profile, Roles = undefined> {
 
   user$ = isPlatformServer(this.platformId)
     ? this.zone.runOutsideAngular(() => user(this.auth))
-    : user(this.auth).pipe(shareWithDelay());
+    : user(this.auth).pipe(shareReplay({ refCount: true, bufferSize: 1 }));
   
   /**
    * Observe current user. Doesn't emit if there are no user connected.
@@ -129,7 +128,9 @@ export abstract class BaseFireAuth<Profile, Roles = undefined> {
       return this.zone.runOutsideAngular(() => from(getDoc(ref))).pipe(keepUnstableUntilFirst(this.zone));
     }
     if (!this.memoProfile[ref.path]) {
-      this.memoProfile[ref.path] = fromRef(ref).pipe(shareWithDelay());
+      this.memoProfile[ref.path] = fromRef(ref).pipe(
+        shareWithDelay(100),
+      );
     }
     return this.memoProfile[ref.path];
   }

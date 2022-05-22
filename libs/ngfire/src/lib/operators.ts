@@ -1,15 +1,13 @@
 import {
   combineLatest,
-  MonoTypeOperatorFunction,
   Observable,
   OperatorFunction,
-  ReplaySubject,
-  Subscriber,
-  Subscription,
   of,
   from,
+  ReplaySubject,
+  timer,
 } from 'rxjs';
-import { debounceTime, map, startWith, switchMap, tap } from 'rxjs/operators';
+import { debounceTime, map, startWith, switchMap, tap, share } from 'rxjs/operators';
 
 import { onSnapshot, DocumentReference, DocumentData, SnapshotListenOptions, Query, DocumentSnapshot, QuerySnapshot } from 'firebase/firestore';
 import { Auth, User, onIdTokenChanged } from 'firebase/auth';
@@ -50,6 +48,16 @@ export function user(auth: Auth): Observable<User|null> {
 }
 
 
+export function shareWithDelay<T>(delay: number = 100) {
+  return share<T>({
+    connector: () => new ReplaySubject(1),
+    resetOnRefCountZero: () => timer(delay),
+    resetOnError: true,
+    resetOnComplete: false,
+  })
+}
+
+
 /**
  * Replay the data and share it across source.
  * It will unsubscribe after a delay when there is no more subscriber
@@ -57,68 +65,68 @@ export function user(auth: Auth): Observable<User|null> {
  * @note code based on shareReplay of rxjs v6.6.7: https://github.com/ReactiveX/rxjs/blob/6.6.7/src/internal/operators/shareReplay.ts
  * @param delay Delay in ms to wait before unsubscribing
  */
-function shareWithDelay<T>(delay: number = 100): MonoTypeOperatorFunction<T> {
-  let subject: ReplaySubject<T> | undefined;
-  let subscription: Subscription | undefined;
-  let refCount = 0;
-  let hasError = false;
-  let isComplete = false;
-  let lastValue: T;
-  function operation(this: Subscriber<T>, source: Observable<T>) {
-    refCount++;
-    let innerSub: Subscription | undefined;
-    if (!subject || hasError) {
-      hasError = false;
-      subject = new ReplaySubject<T>(1, Infinity);
-      if (lastValue) subject.next(lastValue);
-      innerSub = subject.subscribe(this);
-      subscription = source.subscribe({
-        next(value) {
-          subject?.next(value);
-          lastValue = value;
-        },
-        error(err) {
-          hasError = true;
-          subject?.error(err);
-        },
-        complete() {
-          isComplete = true;
-          subscription = undefined;
-          subject?.complete();
-        }
-      });
+// function shareWithDelay<T>(delay: number = 100): MonoTypeOperatorFunction<T> {
+//   let subject: ReplaySubject<T> | undefined;
+//   let subscription: Subscription | undefined;
+//   let refCount = 0;
+//   let hasError = false;
+//   let isComplete = false;
+//   let lastValue: T;
+//   function operation(this: Subscriber<T>, source: Observable<T>) {
+//     refCount++;
+//     let innerSub: Subscription | undefined;
+//     if (!subject || hasError) {
+//       hasError = false;
+//       subject = new ReplaySubject<T>(1, Infinity);
+//       if (lastValue) subject.next(lastValue);
+//       innerSub = subject.subscribe(this);
+//       subscription = source.subscribe({
+//         next(value) {
+//           subject?.next(value);
+//           lastValue = value;
+//         },
+//         error(err) {
+//           hasError = true;
+//           subject?.error(err);
+//         },
+//         complete() {
+//           isComplete = true;
+//           subscription = undefined;
+//           subject?.complete();
+//         }
+//       });
 
-      // Here we need to check to see if the source synchronously completed. Although
-      // we're setting `subscription = undefined` in the completion handler, if the source
-      // is synchronous, that will happen *before* subscription is set by the return of
-      // the `subscribe` call.
-      if (isComplete) {
-        subscription = undefined;
-      }
-    } else {
-      innerSub = subject.subscribe(this);
-    }
+//       // Here we need to check to see if the source synchronously completed. Although
+//       // we're setting `subscription = undefined` in the completion handler, if the source
+//       // is synchronous, that will happen *before* subscription is set by the return of
+//       // the `subscribe` call.
+//       if (isComplete) {
+//         subscription = undefined;
+//       }
+//     } else {
+//       innerSub = subject.subscribe(this);
+//     }
 
-    const checkReset = () => {
-      if (subscription && !isComplete && refCount === 0) {
-        subscription.unsubscribe();
-        subscription = undefined;
-        subject = undefined;
-      }
-    }
+//     const checkReset = () => {
+//       if (subscription && !isComplete && refCount === 0) {
+//         subscription.unsubscribe();
+//         subscription = undefined;
+//         subject = undefined;
+//       }
+//     }
 
-    this.add(() => {
-      refCount--;
-      innerSub?.unsubscribe();
-      innerSub = undefined;
+//     this.add(() => {
+//       refCount--;
+//       innerSub?.unsubscribe();
+//       innerSub = undefined;
 
-      // await some ms before unsubscribing
-      delay ? setTimeout(checkReset, delay) : checkReset();
-    });
-  }
+//       // await some ms before unsubscribing
+//       delay ? setTimeout(checkReset, delay) : checkReset();
+//     });
+//   }
 
-  return (source: Observable<T>) => source.lift(operation);
-}
+//   return (source: Observable<T>) => source.lift(operation);
+// }
 
 
 
