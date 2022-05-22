@@ -51,7 +51,7 @@ export function user(auth: Auth): Observable<User|null> {
 export function shareWithDelay<T>(delay: number = 100) {
   return share<T>({
     connector: () => new ReplaySubject(1),
-    resetOnRefCountZero: () => timer(delay),
+    resetOnRefCountZero: () => delay ? timer(delay) : of(true),
     resetOnError: true,
     resetOnComplete: false,
   })

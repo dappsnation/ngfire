@@ -5,8 +5,8 @@ import type { DocumentData, CollectionReference, DocumentReference, QueryConstra
 import { fromRef } from '../operators';
 import { WriteOptions, UpdateCallback, MetaDocument, Params, FireEntity, DeepKeys } from '../types';
 import { isIdList, isNotUndefined, isPathRef, isQuery, pathWithParams } from '../utils';
-import { Observable, of, combineLatest, from, firstValueFrom, startWith } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { Observable, of, combineLatest, from, firstValueFrom } from 'rxjs';
+import { map, tap, startWith } from 'rxjs/operators';
 
 import { isPlatformServer } from '@angular/common';
 import { keepUnstableUntilFirst } from '../zone';
@@ -48,9 +48,17 @@ export abstract class FireCollection<E extends DocumentData> {
   protected firestore = inject(FirestoreService);
   protected abstract readonly path: string;
   protected idKey: DeepKeys<E> = 'id' as any;
-  // If true, will store the document id (IdKey) onto the document
+  /** If true, will store the document id (IdKey) onto the document */
   protected storeId = false;
+  /**
+   * Cache the snapshot into a global store
+   */
   protected memorize = false;
+  /**
+   * Delay before unsubscribing to a query (used only with memorized is true)
+   * Use Infinty for application long subscription
+   */
+  protected delayToUnsubscribe = 0;
 
   protected onCreate?(entity: E, options: WriteOptions): unknown;
   protected onUpdate?(entity: FireEntity<E>, options: WriteOptions): unknown;
@@ -68,7 +76,7 @@ export abstract class FireCollection<E extends DocumentData> {
     if (!this.memorize) return fromRef(ref as Query<T>).pipe(map(snap => this.snapToData(snap)));
     const transfer = this.firestore.getTransfer(ref);
     const initial = this.firestore.getState(ref);
-    const snap$ = this.firestore.fromMemory(ref).pipe(
+    const snap$ = this.firestore.fromMemory(ref, this.delayToUnsubscribe).pipe(
       tap(snap => this.firestore.setState(ref, snap))
     );
     if (transfer) return snap$.pipe(map(snap => this.snapToData(snap)), startWith(transfer));

@@ -3,7 +3,7 @@ import { collection, doc, DocumentData, DocumentSnapshot, query, queryEqual, Que
 import type { Transaction, CollectionReference, DocumentReference, Query, QueryConstraint } from 'firebase/firestore';
 import { FIRESTORE } from "./tokens";
 import { assertCollection, assertPath, isCollectionRef, isDocPath, isQuery } from "../utils";
-import { fromRef } from "../operators";
+import { fromRef, shareWithDelay } from "../operators";
 import { makeStateKey, TransferState } from "@angular/platform-browser";
 import { isPlatformBrowser, isPlatformServer } from "@angular/common";
 import { Observable, shareReplay } from "rxjs";
@@ -39,6 +39,7 @@ export class FirestoreService {
       for (const key of this.state.keys()) {
         if (typeof key !== 'string' && queryEqual(key, ref)) return;
       }
+      this.state.set(ref, snap);
     } else {
       this.state.set(ref.path, snap);
     }
@@ -56,11 +57,14 @@ export class FirestoreService {
   }
 
   /** @internal Should only be used by FireCollection services */
-  fromMemory<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>): Observable<Snapshot<E>> {
+  fromMemory<E>(
+    ref: DocumentReference<E> | CollectionReference<E> | Query<E>,
+    delay?: number
+  ): Observable<Snapshot<E>> {
     if (!isQuery(ref)) {
       const path = ref.path;
       if (!this.memoryRef[path]) {
-        this.memoryRef[path] = fromRef(ref).pipe(shareReplay({ refCount: true, bufferSize: 1 }));
+        this.memoryRef[path] = fromRef(ref).pipe(shareWithDelay(delay));
       }
       return this.memoryRef[path] as Observable<Snapshot<E>>;
     } else {
@@ -74,7 +78,7 @@ export class FirestoreService {
       if (existing) return existing;
       // We remove delay because firestore cache can create side effect when active onSnapshot overlap
       // TODO: check how to leverage native cache from JS sdk
-      const observable = fromRef(ref).pipe(shareReplay({ refCount: true, bufferSize: 1 }));
+      const observable = fromRef(ref).pipe(shareWithDelay(delay));
       this.memoryQuery.set(ref, observable);
       return observable;
     }
