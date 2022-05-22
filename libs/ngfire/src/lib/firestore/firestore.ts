@@ -3,10 +3,11 @@ import { collection, doc, DocumentData, DocumentSnapshot, query, queryEqual, Que
 import type { Transaction, CollectionReference, DocumentReference, Query, QueryConstraint } from 'firebase/firestore';
 import { FIRESTORE } from "./tokens";
 import { assertCollection, assertPath, isDocPath, isQuery } from "../utils";
-import { Observable } from "rxjs";
 import { fromRef, shareWithDelay } from "../operators";
 import { makeStateKey, TransferState } from "@angular/platform-browser";
 import { isPlatformBrowser, isPlatformServer } from "@angular/common";
+import { filter } from "rxjs/operators";
+import { Observable } from "rxjs";
 
 type Reference<E> = CollectionReference<E> | DocumentReference<E>;
 type Snapshot<E = DocumentData> = DocumentSnapshot<E> | QuerySnapshot<E>;
@@ -20,7 +21,7 @@ export class FirestoreService {
   /** Transfer state between server and  */
   private transferState = inject(TransferState, InjectFlags.Optional);
   /** Cache based state for document */
-  private state: Record<string, any> = {};
+  private state: Record<string, unknown> = {};
 
   get db() {
     return this.injector.get(FIRESTORE);
@@ -34,7 +35,7 @@ export class FirestoreService {
 
   getState<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>): E | E[] | undefined {
     if (isQuery(ref)) return;
-    return this.state[ref.path];
+    return this.state[ref.path] as E | E[] | undefined;
   }
 
   /** @internal Should only be used by FireCollection services */
@@ -48,13 +49,22 @@ export class FirestoreService {
         }
       }
       if (existing) return existing;
-      const observable = fromRef(ref).pipe(shareWithDelay());
+      // Firestore will return a part of the query from cache before returning the whole query
+      // Because of the unsubscription delay, it can create partial result. So let's ignore them.
+      // TODO: check how to use native cache instead of recreating it
+      const observable = fromRef(ref, { includeMetadataChanges: true }).pipe(
+        filter(snap => !snap.metadata.fromCache),
+        shareWithDelay()
+      );
       this.memoryQuery.set(ref, observable);
       return this.memoryQuery.get(ref) as Observable<QuerySnapshot<E>>;
     } else {
       const path = ref.path;
       if (!this.memoryRef[path]) {
-        this.memoryRef[path] = fromRef(ref).pipe(shareWithDelay());
+        this.memoryRef[path] = fromRef(ref, { includeMetadataChanges: true }).pipe(
+          filter(snap => !snap.metadata.fromCache),
+          shareWithDelay()
+        );
       }
       return this.memoryRef[path] as Observable<Snapshot<E>>;
     }
