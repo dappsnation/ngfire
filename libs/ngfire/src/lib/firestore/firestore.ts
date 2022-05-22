@@ -57,7 +57,7 @@ export class FirestoreService {
         shareWithDelay()
       );
       this.memoryQuery.set(ref, observable);
-      return this.memoryQuery.get(ref) as Observable<QuerySnapshot<E>>;
+      return observable;
     } else {
       const path = ref.path;
       if (!this.memoryRef[path]) {
