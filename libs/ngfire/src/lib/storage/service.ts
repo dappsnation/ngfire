@@ -1,10 +1,10 @@
 import { inject, Injectable } from "@angular/core";
 import { ref, uploadBytesResumable, UploadMetadata } from "firebase/storage";
-import { FIRE_STORAGE } from "./tokens";
+import { GET_FIRE_STORAGE } from "./tokens";
 
 @Injectable({ providedIn: 'root' })
 export class FireStorage {
-  private getStorage = inject(FIRE_STORAGE);
+  private getStorage = inject(GET_FIRE_STORAGE);
   protected bucket?: string;
 
   protected get storage() {

@@ -1,6 +1,7 @@
 export * from './lib/app';
 export * from './lib/auth';
 export * from './lib/firestore';
+export * from './lib/analytics';
 export * from './lib/functions';
 export * from './lib/database';
 export * from './lib/operators';

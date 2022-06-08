@@ -5,6 +5,7 @@ import type { FirebaseOptions } from 'firebase/app';
 import type { Auth } from "firebase/auth";
 import type { Firestore, FirestoreSettings } from 'firebase/firestore';
 import type { Database } from "firebase/database";
+import type { Analytics, AnalyticsSettings } from "firebase/analytics";
 
 interface FirebaseConfig {
   options: FirebaseOptions,
@@ -13,11 +14,13 @@ interface FirebaseConfig {
   storage?: (storage: FirebaseStorage) => void,
   functions?: (functions: Functions) => void,
   database?: (db: Database) => void,
+  analytics?: (analytics: Analytics) => void,
 }
 
 export const FIREBASE_CONFIG = new InjectionToken<FirebaseConfig>('Firebase Config');
 export const REGION_OR_DOMAIN = new InjectionToken<string>('Firebase cloud functions region or domain');
 export const FIRESTORE_SETTINGS = new InjectionToken<FirestoreSettings>('Firestore settings');
+export const ANALYTICS_SETTINGS = new InjectionToken<AnalyticsSettings>('Analytics settings');
 
 export function getConfig() {
   try {

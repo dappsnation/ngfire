@@ -1,34 +1,28 @@
-import { inject, Injectable, InjectionToken, NgZone, PLATFORM_ID } from "@angular/core";
+import { inject, Injectable, InjectionToken, Injector, NgZone, PLATFORM_ID } from "@angular/core";
 import { isPlatformServer } from "@angular/common";
 import { doc, getDoc, writeBatch, runTransaction } from "firebase/firestore";
 import { Auth, getAuth, UserCredential, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, signInAnonymously, signInWithPopup, signInWithCustomToken, AuthProvider, User, getAdditionalUserInfo } from "firebase/auth";
 import { getConfig } from "./config";
-import { initializeApp } from "firebase/app";
 import { FIRESTORE } from "./firestore";
 import type { WriteBatch, DocumentSnapshot, DocumentReference, UpdateData } from 'firebase/firestore';
-import { user, fromRef } from './operators';
+import { user, fromRef, shareWithDelay } from './operators';
 import { AtomicWrite, MetaDocument, UpdateCallback } from "./types";
-import { shareWithDelay } from "./operators";
 import { keepUnstableUntilFirst } from "./zone";
 import { toDate } from "./firestore/collection";
-import { filter, map, switchMap, take } from "rxjs/operators";
-import { from, Observable, of } from "rxjs";
+import { filter, map, switchMap, shareReplay, tap } from "rxjs/operators";
+import { firstValueFrom, from, Observable, of } from "rxjs";
+import { FIREBASE_APP } from "./app";
 
 const exist = <T>(v?: T | null): v is T => v !== null && v !== undefined;
 
-export const FIRE_AUTH = new InjectionToken<() => Auth>('Fire auth instance', {
+export const FIRE_AUTH = new InjectionToken<Auth>('Fire auth instance', {
   providedIn: 'root',
   factory: () => {
-    let auth: Auth;
     const config = getConfig();
-    return () => {
-      if (!auth) {
-        const app = initializeApp(config.options, config.options.appId);
-        auth = getAuth(app);
-        if (config.auth) config.auth(auth);
-      }
-      return auth;
-    };
+    const app = inject(FIREBASE_APP);
+    const auth = getAuth(app);
+    if (config.auth) config.auth(auth);
+    return auth;
   },
 });
 
@@ -77,22 +71,22 @@ export abstract class BaseFireAuth<Profile, Roles = undefined> {
   private memoProfile: Record<string, Observable<DocumentSnapshot<Profile>>> = {};
   private platformId = inject(PLATFORM_ID);
   protected getAuth = inject(FIRE_AUTH);
-  protected getFirestore = inject(FIRESTORE);
+  protected injector = inject(Injector);
   private zone = inject(NgZone);
   
   protected abstract path: string | undefined;
   protected idKey = 'id';
   protected verificationUrl?: string;
-
+  
   protected abstract signin(...arg: any[]): Promise<UserCredential>;
   protected abstract signout(): Promise<void>;
 
   protected get db() {
-    return this.getFirestore();
+    return this.injector.get(FIRESTORE);
   }
   
   get auth() {
-    return this.getAuth();
+    return this.injector.get(FIRE_AUTH);
   }
 
   get user() {
@@ -101,7 +95,7 @@ export abstract class BaseFireAuth<Profile, Roles = undefined> {
 
   user$ = isPlatformServer(this.platformId)
     ? this.zone.runOutsideAngular(() => user(this.auth))
-    : user(this.auth).pipe(shareWithDelay());
+    : user(this.auth).pipe(shareReplay({ refCount: true, bufferSize: 1 }));
   
   /**
    * Observe current user. Doesn't emit if there are no user connected.
@@ -134,7 +128,9 @@ export abstract class BaseFireAuth<Profile, Roles = undefined> {
       return this.zone.runOutsideAngular(() => from(getDoc(ref))).pipe(keepUnstableUntilFirst(this.zone));
     }
     if (!this.memoProfile[ref.path]) {
-      this.memoProfile[ref.path] = fromRef(ref).pipe(shareWithDelay());
+      this.memoProfile[ref.path] = fromRef(ref).pipe(
+        shareWithDelay(100),
+      );
     }
     return this.memoProfile[ref.path];
   }
@@ -197,7 +193,7 @@ export abstract class BaseFireAuth<Profile, Roles = undefined> {
 
   /** Return current user. Only return when auth has emit */
   awaitUser() {
-    return this.user$.pipe(take(1)).toPromise();
+    return firstValueFrom(this.user$);
   }
 
   /** Get the current user Profile from Firestore */

@@ -1,9 +1,14 @@
 <ul>
   <li *ngFor="let token of tokens$ | async">
     <button (click)="remove(token.key)">Remove</button>
+    <button (click)="select(token.key)">Select</button>
     <p>{{ token.tokenId }}</p>
     <small>{{ token.created | date }}</small>
   </li>
 </ul>
+
+<article *ngIf="selected$ | async as token">
+  <h3>{{ token | json }}</h3>
+</article>
 
 <button (click)="add()">Add</button>

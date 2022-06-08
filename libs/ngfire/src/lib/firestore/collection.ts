@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { inject, NgZone, PLATFORM_ID } from '@angular/core';
-import { FIRESTORE } from './tokens';
 import { writeBatch, runTransaction, doc, collection, Query, getDocs, getDoc, Timestamp, Transaction, DocumentSnapshot, FieldValue } from 'firebase/firestore';
 import type { DocumentData, CollectionReference, DocumentReference, QueryConstraint, QueryDocumentSnapshot, QuerySnapshot, WriteBatch } from 'firebase/firestore';
 import { fromRef } from '../operators';
 import { WriteOptions, UpdateCallback, MetaDocument, Params, FireEntity, DeepKeys } from '../types';
 import { isIdList, isNotUndefined, isPathRef, isQuery, pathWithParams } from '../utils';
-import { Observable, of, combineLatest, from, firstValueFrom, startWith } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { Observable, of, combineLatest, from, firstValueFrom } from 'rxjs';
+import { map, tap, startWith } from 'rxjs/operators';
 
 import { isPlatformServer } from '@angular/common';
 import { keepUnstableUntilFirst } from '../zone';
@@ -44,15 +43,22 @@ export function toDate<D>(target: D): D {
 /////////////
 
 export abstract class FireCollection<E extends DocumentData> {
-  private getFirestore = inject(FIRESTORE);
   protected platformId = inject(PLATFORM_ID);
   protected zone = inject(NgZone);
   protected firestore = inject(FirestoreService);
   protected abstract readonly path: string;
   protected idKey: DeepKeys<E> = 'id' as any;
-  // If true, will store the document id (IdKey) onto the document
+  /** If true, will store the document id (IdKey) onto the document */
   protected storeId = false;
+  /**
+   * Cache the snapshot into a global store
+   */
   protected memorize = false;
+  /**
+   * Delay before unsubscribing to a query (used only with memorized is true)
+   * Use Infinty for application long subscription
+   */
+  protected delayToUnsubscribe = 0;
 
   protected onCreate?(entity: E, options: WriteOptions): unknown;
   protected onUpdate?(entity: FireEntity<E>, options: WriteOptions): unknown;
@@ -60,27 +66,25 @@ export abstract class FireCollection<E extends DocumentData> {
 
 
   protected get db() {
-    return this.getFirestore();
+    return this.firestore.db;
   }
 
-  protected useCache(ref: DocumentReference<E>): Observable<E>
-  protected useCache(ref: Query<E>): Observable<E[]>
-  protected useCache(ref: DocumentReference<E> | Query<E>): Observable<E | E[]>   
-  protected useCache(ref: DocumentReference<E> | Query<E>): Observable<E | E[]> {    
-    if (!this.memorize) return fromRef(ref as Query<E>).pipe(map(snap => this.snapToData(snap)));
+  protected useCache<T extends E>(ref: DocumentReference<T>): Observable<T>
+  protected useCache<T extends E>(ref: Query<T>): Observable<T[]>
+  protected useCache<T extends E>(ref: DocumentReference<T> | Query<T>): Observable<T | T[]>   
+  protected useCache<T extends E>(ref: DocumentReference<T> | Query<T>): Observable<T | T[]> {    
+    if (!this.memorize) return fromRef(ref as Query<T>).pipe(map(snap => this.snapToData(snap)));
     const transfer = this.firestore.getTransfer(ref);
-    if (transfer) this.firestore.setState(ref, transfer)
     const initial = this.firestore.getState(ref);
-    const result = this.firestore.fromMemory(ref).pipe(
-      map(snap => this.snapToData(snap)),
-      tap(state => this.firestore.setState(ref, state)),
+    const snap$ = this.firestore.fromMemory(ref, this.delayToUnsubscribe).pipe(
+      tap(snap => this.firestore.setState(ref, snap))
     );
-    return initial 
-      ? result.pipe(startWith(initial))
-      : result;
+    if (transfer) return snap$.pipe(map(snap => this.snapToData(snap)), startWith(transfer));
+    if (initial) return snap$.pipe(startWith(initial), map(snap => this.snapToData(snap)));
+    return snap$.pipe(map(snap => this.snapToData(snap)));
   }
 
-  protected clearCache(refs: CollectionReference<E> | DocumentReference<E> | Query<E> | DocumentReference<E>[]) {
+  protected clearCache<T extends E>(refs: CollectionReference<T> | DocumentReference<T> | Query<T> | DocumentReference<T>[]) {
     if (Array.isArray(refs)) return this.firestore.clearCache(refs.map(ref => ref.path));
     if (isQuery(refs)) return this.firestore.clearCache(refs);
     return this.firestore.clearCache(refs?.path);
@@ -119,41 +123,41 @@ export abstract class FireCollection<E extends DocumentData> {
 
 
   /** Get the content of the snapshot */
-  protected snapToData(snap: DocumentSnapshot<E>): E;
-  protected snapToData(snap: DocumentSnapshot<E>[]): E[];
-  protected snapToData(snap: QuerySnapshot<E>): E[];
-  protected snapToData(snap: QuerySnapshot<E> | DocumentSnapshot<E> | DocumentSnapshot<E>[]): E | E[];
-  protected snapToData(snap: QuerySnapshot<E> | DocumentSnapshot<E> | DocumentSnapshot<E>[]): E | E[] {
-    if (snap instanceof DocumentSnapshot) return this.fromFirestore(snap) as E;
+  protected snapToData<T extends E = E>(snap: DocumentSnapshot<T>): T;
+  protected snapToData<T extends E = E>(snap: DocumentSnapshot<T>[]): T[];
+  protected snapToData<T extends E = E>(snap: QuerySnapshot<T>): T[];
+  protected snapToData<T extends E = E>(snap: QuerySnapshot<T> | DocumentSnapshot<T> | DocumentSnapshot<T>[]): T | T[];
+  protected snapToData<T extends E = E>(snap: QuerySnapshot<T> | DocumentSnapshot<T> | DocumentSnapshot<T>[]): T | T[] {
+    if (snap instanceof DocumentSnapshot) return this.fromFirestore(snap) as T;
     const snaps = Array.isArray(snap) ? snap : snap.docs;
     return snaps.map(s => this.snapToData(s)).filter(isNotUndefined);
   }
 
   /** Get the content of reference(s) */
-  protected async getFromRef(ref: DocumentReference<E>): Promise<E | undefined>;
-  protected async getFromRef(ref: DocumentReference<E>[]): Promise<E[]>;
-  protected async getFromRef(ref: CollectionReference<E> | Query<E>): Promise<E[]>;
-  protected async getFromRef(
-    ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>
-  ): Promise<undefined | E | E[]>;
-  protected async getFromRef(
-    ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>
-  ): Promise<undefined | E | E[]> {
+  protected async getFromRef<T extends E = E>(ref: DocumentReference<T>): Promise<T | undefined>;
+  protected async getFromRef<T extends E = E>(ref: DocumentReference<T>[]): Promise<T[]>;
+  protected async getFromRef<T extends E = E>(ref: CollectionReference<T> | Query<T>): Promise<T[]>;
+  protected async getFromRef<T extends E = E>(
+    ref: DocumentReference<T> | DocumentReference<T>[] | CollectionReference<T> | Query<T>
+  ): Promise<undefined | T | T[]>;
+  protected async getFromRef<T extends E = E>(
+    ref: DocumentReference<T> | DocumentReference<T>[] | CollectionReference<T> | Query<T>
+  ): Promise<undefined | T | T[]> {
     if (Array.isArray(ref)) return Promise.all(ref.map(getDoc)).then(snaps => this.snapToData(snaps));
     const snap = (ref.type === 'document') ? await getDoc(ref) : await getDocs(ref);
     return this.snapToData(snap);
   }
 
   /** Observable the content of reference(s)  */
-  protected fromRef(ref: DocumentReference<E>): Observable<E | undefined>;
-  protected fromRef(ref: DocumentReference<E>[]): Observable<E[]>;
-  protected fromRef(ref: CollectionReference<E> | Query<E>): Observable<E[]>;
-  protected fromRef(
-    ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>
-  ): Observable<undefined | E | E[]>;
-  protected fromRef(
-    ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>
-  ): Observable<undefined | E | E[]> {
+  protected fromRef<T extends E = E>(ref: DocumentReference<T>): Observable<T | undefined>;
+  protected fromRef<T extends E = E>(ref: DocumentReference<T>[]): Observable<T[]>;
+  protected fromRef<T extends E = E>(ref: CollectionReference<T> | Query<T>): Observable<T[]>;
+  protected fromRef<T extends E = E>(
+    ref: DocumentReference<T> | DocumentReference<T>[] | CollectionReference<T> | Query<T>
+  ): Observable<undefined | T | T[]>;
+  protected fromRef<T extends E = E>(
+    ref: DocumentReference<T> | DocumentReference<T>[] | CollectionReference<T> | Query<T>
+  ): Observable<undefined | T | T[]> {
     if (isPlatformServer(this.platformId)) {
       return this.zone.runOutsideAngular(() => from(this.getFromRef(ref))).pipe(
         tap(value => this.firestore.setTransfer(ref, value)),
@@ -174,20 +178,20 @@ export abstract class FireCollection<E extends DocumentData> {
   ///////////////
 
   /** Get the reference of the document, collection or query */
-  public getRef(): CollectionReference<E>;
-  public getRef(ids: string[], params?: Params): DocumentReference<E>[];
-  public getRef(constraints: QueryConstraint[], params: Params): Query<E>;
-  public getRef(id: string, params?: Params): DocumentReference<E>;
-  public getRef(path: string, params?: Params): DocumentReference<E> | CollectionReference<E>;
-  public getRef(params: Params): CollectionReference<E>;
-  public getRef(
+  public getRef<T extends E = E>(): CollectionReference<T>;
+  public getRef<T extends E = E>(ids: string[], params?: Params): DocumentReference<T>[];
+  public getRef<T extends E = E>(constraints: QueryConstraint[], params: Params): Query<T>;
+  public getRef<T extends E = E>(id: string, params?: Params): DocumentReference<T>;
+  public getRef<T extends E = E>(path: string, params?: Params): DocumentReference<T> | CollectionReference<T>;
+  public getRef<T extends E = E>(params: Params): CollectionReference<T>;
+  public getRef<T extends E = E>(
     ids?: string | string[] | Params | QueryConstraint[],
     params?: Params
-  ): undefined | Query<E> | CollectionReference<E> | DocumentReference<E> | DocumentReference<E>[]
-  public getRef(
+  ): undefined | Query<T> | CollectionReference<T> | DocumentReference<T> | DocumentReference<T>[]
+  public getRef<T extends E>(
     ids?: string | string[] | Params | QueryConstraint[],
     parameters?: Params
-  ): undefined | Query<E> | CollectionReference<E> | DocumentReference<E> | DocumentReference<E>[] {
+  ): undefined | Query<T> | CollectionReference<T> | DocumentReference<T> | DocumentReference<T>[] {
     // Collection
     if (!arguments.length) return this.firestore.getRef(this.path);
     // Id is undefined or null
@@ -218,13 +222,13 @@ export abstract class FireCollection<E extends DocumentData> {
 
 
   /** Clear cache and get the latest value into the cache */
-  public async reload(ids?: string[]): Promise<E[]>;
-  public async reload(query?: QueryConstraint[]): Promise<E[]>;
-  public async reload(id?: string | null): Promise<E | undefined>;
-  public async reload(
+  public async reload<T extends E = E>(ids?: string[]): Promise<T[]>;
+  public async reload<T extends E = E>(query?: QueryConstraint[]): Promise<T[]>;
+  public async reload<T extends E = E>(id?: string | null): Promise<T | undefined>;
+  public async reload<T extends E = E>(
     idOrQuery?: string | string[] | QueryConstraint[] | null,
-  ): Promise<E | E[] | undefined>
-  public async reload(): Promise<E | E[] | undefined> {
+  ): Promise<T | T[] | undefined>
+  public async reload<T extends E = E>(): Promise<T | T[] | undefined> {
     if (!this.memorize) return;
     const ref = this.getRef(...arguments);
     if (!ref) return;
@@ -233,41 +237,41 @@ export abstract class FireCollection<E extends DocumentData> {
   }
 
   /** Get the last content from the app (if value has been cached, it won't do a server request) */
-  public async load(ids?: string[]): Promise<E[]>;
-  public async load(query?: QueryConstraint[]): Promise<E[]>;
-  public async load(id?: string | null): Promise<E | undefined>;
-  public async load(
+  public async load<T extends E = E>(ids?: string[]): Promise<T[]>;
+  public async load<T extends E = E>(query?: QueryConstraint[]): Promise<T[]>;
+  public async load<T extends E = E>(id?: string | null): Promise<T | undefined>;
+  public async load<T extends E = E>(
     idOrQuery?: string | string[] | QueryConstraint[] | null,
-  ): Promise<E | E[] | undefined>
-  public async load(): Promise<E | E[] | undefined> {
+  ): Promise<T | T[] | undefined>
+  public async load<T extends E>(): Promise<T | T[] | undefined> {
     return firstValueFrom(this.valueChanges(...arguments));
   }
 
   /** Return the current value of the path from Firestore */
-  public async getValue(ids?: string[]): Promise<E[]>;
-  public async getValue(query?: QueryConstraint[]): Promise<E[]>;
-  public async getValue(id?: string | null): Promise<E | undefined>;
-  public async getValue(idOrQuery?: null | string | string[] | QueryConstraint[]): Promise<E | E[] | undefined>
-  public async getValue(): Promise<E | E[] | undefined> {
-    const ref = this.getRef(...arguments);
+  public async getValue<T extends E = E>(ids?: string[]): Promise<T[]>;
+  public async getValue<T extends E = E>(query?: QueryConstraint[]): Promise<T[]>;
+  public async getValue<T extends E = E>(id?: string | null): Promise<T | undefined>;
+  public async getValue<T extends E = E>(idOrQuery?: null | string | string[] | QueryConstraint[]): Promise<T | T[] | undefined>
+  public async getValue<T extends E = E>(): Promise<T | T[] | undefined> {
+    const ref = this.getRef<T>(...arguments);
     if (!ref) return;
-    return this.getFromRef(ref);
+    return this.getFromRef<T>(ref);
   }
 
   /** Listen to the changes of values of the path from Firestore */
-  public valueChanges(ids?: string[]): Observable<E[]>;
-  public valueChanges(query?: QueryConstraint[]): Observable<E[]>;
-  public valueChanges(id?: string | null): Observable<E | undefined>;
-  public valueChanges(
+  public valueChanges<T extends E = E>(ids?: string[]): Observable<T[]>;
+  public valueChanges<T extends E = E>(query?: QueryConstraint[]): Observable<T[]>;
+  public valueChanges<T extends E = E>(id?: string | null): Observable<T | undefined>;
+  public valueChanges<T extends E = E>(
     idOrQuery?: string | string[] | QueryConstraint[] | null,
-  ): Observable<E | E[] | undefined>;
-  public valueChanges(
+  ): Observable<T | T[] | undefined>;
+  public valueChanges<T extends E = E>(
     idOrQuery?: string | string[] | QueryConstraint[] | null,
-  ): Observable<E | E[] | undefined> {
+  ): Observable<T | T[] | undefined> {
     if (Array.isArray(idOrQuery) && !idOrQuery.length) return of([]);
-    const ref = this.getRef(...arguments);
+    const ref = this.getRef<T>(...arguments);
     if (!ref) return of(undefined);
-    return this.fromRef(ref);
+    return this.fromRef<T>(ref);
   }
 
 
@@ -279,13 +283,13 @@ export abstract class FireCollection<E extends DocumentData> {
    * @param documents One or many documents
    * @param options options to write the document on firestore
    */
-  upsert(documents: FireEntity<E>, options?: WriteOptions): Promise<string>;
-  upsert(documents: FireEntity<E>[], options?: WriteOptions): Promise<string[]>;
-  async upsert(
-    documents: FireEntity<E> | FireEntity<E>[],
+  upsert<T extends E>(documents: FireEntity<T>, options?: WriteOptions): Promise<string>;
+  upsert<T extends E>(documents: FireEntity<T>[], options?: WriteOptions): Promise<string[]>;
+  async upsert<T extends E>(
+    documents: FireEntity<T> | FireEntity<T>[],
     options: WriteOptions = {}
   ): Promise<string | string[]> {
-    const doesExist = async (doc: FireEntity<E>) => {
+    const doesExist = async (doc: FireEntity<T>) => {
       const id: string | FieldValue | undefined = doc[this.idKey];
       if (typeof id !== 'string') return false;
       const ref = this.getRef(id, options.params);
@@ -294,7 +298,7 @@ export abstract class FireCollection<E extends DocumentData> {
         : await getDoc(ref);
       return snap.exists();
     };
-    const upsert = async (doc: FireEntity<E>) => {
+    const upsert = async (doc: FireEntity<T>) => {
       const exists = await doesExist(doc);
       if (!exists) return this.add(doc, options);
       await this.update(doc, options);
@@ -310,10 +314,10 @@ export abstract class FireCollection<E extends DocumentData> {
    * @param docs A document or a list of document
    * @param options options to write the document on firestore
    */
-  add(documents: FireEntity<E>, options?: WriteOptions): Promise<string>;
-  add(documents: FireEntity<E>[], options?: WriteOptions): Promise<string[]>;
-  async add(
-    documents: FireEntity<E> | FireEntity<E>[],
+  add<T extends E>(documents: FireEntity<T>, options?: WriteOptions): Promise<string>;
+  add<T extends E>(documents: FireEntity<T>[], options?: WriteOptions): Promise<string[]>;
+  async add<T extends E>(
+    documents: FireEntity<T> | FireEntity<T>[],
     options: WriteOptions = {}
   ): Promise<string | string[]> {
     const docs = Array.isArray(documents) ? documents : [documents];
@@ -342,12 +346,12 @@ export abstract class FireCollection<E extends DocumentData> {
    * @param id A unique or list of id representing the document
    * @param options options to write the document on firestore
    */
-  async remove(id: string | string[], options: WriteOptions = {}) {
+  async remove<T extends E>(id: string | string[], options: WriteOptions = {}) {
     const { write = this.batch(), ctx } = options;
     const ids: string[] = Array.isArray(id) ? id : [id];
-    const refs: DocumentReference<E>[] = [];
+    const refs: DocumentReference<T>[] = [];
     const operations = ids.map(async (docId) => {
-      const ref = this.getRef(docId, options.params);
+      const ref = this.getRef<T>(docId, options.params);
       write.delete(ref);
       if (this.onDelete) {
         await this.onDelete(docId, { write, ctx });
@@ -374,26 +378,26 @@ export abstract class FireCollection<E extends DocumentData> {
   /**
    * Update one or several document in Firestore
    */
-  update(entity: FireEntity<E> | FireEntity<E>[], options?: WriteOptions): Promise<void>;
-  update(id: string | string[], entityChanges: FireEntity<E>, options?: WriteOptions): Promise<void>;
-  update(
+  update<T extends E>(entity: FireEntity<T> | FireEntity<T>[], options?: WriteOptions): Promise<void>;
+  update<T extends E>(id: string | string[], entityChanges: FireEntity<T>, options?: WriteOptions): Promise<void>;
+  update<T extends E>(
     ids: string | string[],
-    stateFunction: UpdateCallback<E>,
+    stateFunction: UpdateCallback<T>,
     options?: WriteOptions
   ): Promise<Transaction[]>;
-  async update(
-    idsOrEntity: FireEntity<E> | FireEntity<E>[] | string | string[],
-    stateFnOrWrite?: UpdateCallback<E> | FireEntity<E> | WriteOptions,
+  async update<T extends E>(
+    idsOrEntity: FireEntity<T> | FireEntity<T>[] | string | string[],
+    stateFnOrWrite?: UpdateCallback<T> | FireEntity<T> | WriteOptions,
     options: WriteOptions = {}
   ): Promise<void | Transaction[]> {
     let ids: string[] = [];
-    let stateFunction: UpdateCallback<E> | undefined;
-    let getData: (docId: string) => FireEntity<E>;
+    let stateFunction: UpdateCallback<T> | undefined;
+    let getData: (docId: string) => FireEntity<T>;
 
-    const isEntity = (value: DocumentData | string): value is FireEntity<E> => {
+    const isEntity = (value: DocumentData | string): value is FireEntity<T> => {
       return typeof value === 'object' && value[this.idKey];
     };
-    const isEntityArray = (values: DocumentData | string[] | string): values is FireEntity<E>[] => {
+    const isEntityArray = (values: DocumentData | string[] | string): values is FireEntity<T>[] => {
       return Array.isArray(values) && values.every((value) => isEntity(value));
     };
 
@@ -410,10 +414,10 @@ export abstract class FireCollection<E extends DocumentData> {
       options = (stateFnOrWrite as WriteOptions) || {};
     } else if (typeof stateFnOrWrite === 'function') {
       ids = Array.isArray(idsOrEntity) ? idsOrEntity : [idsOrEntity];
-      stateFunction = stateFnOrWrite as UpdateCallback<E>;
+      stateFunction = stateFnOrWrite as UpdateCallback<T>;
     } else if (typeof stateFnOrWrite === 'object') {
       ids = Array.isArray(idsOrEntity) ? idsOrEntity : [idsOrEntity];
-      getData = () => stateFnOrWrite as FireEntity<E>;
+      getData = () => stateFnOrWrite as FireEntity<T>;
     } else {
       throw new Error('Passed parameters match none of the function signatures.');
     }
@@ -425,16 +429,16 @@ export abstract class FireCollection<E extends DocumentData> {
 
     // If update depends on the entity, use transaction
     if (stateFunction) {
-      let refs: DocumentReference<E>[] = [];
+      let refs: DocumentReference<T>[] = [];
       await runTransaction(this.db, async (tx) => {
         refs = [];
         const operations = ids.map(async (id) => {
-          const ref = this.getRef(id, options.params);
+          const ref = this.getRef<T>(id, options.params);
           refs.push(ref);
           const snapshot = await tx.get(ref);
           const doc = this.fromFirestore(snapshot);
           if (doc && stateFunction) {
-            const data = await stateFunction(doc, tx);
+            const data = await stateFunction(doc as T, tx);
             const result = await this.toFirestore(data, 'update');
             tx.update(ref, result);
             if (this.onUpdate) {
@@ -448,13 +452,13 @@ export abstract class FireCollection<E extends DocumentData> {
       if (this.memorize) this.clearCache(refs);
     } else {
       const { write = this.batch() } = options;
-      const refs: DocumentReference<E>[] = [];
+      const refs: DocumentReference<T>[] = [];
       const operations = ids.map(async (docId) => {
         const doc = getData(docId);
         if (!docId) {
           throw new Error(`Document should have an unique id to be updated, but none was found in ${doc}`);
         }
-        const ref = this.getRef(docId, options.params);
+        const ref = this.getRef<T>(docId, options.params);
         refs.push(ref);
         const data = await this.toFirestore(doc, 'update');
         (write as WriteBatch).update(ref, data);
