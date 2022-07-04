@@ -25,10 +25,7 @@ Add the firebase config
 
 `environment.ts` (use emulator) : 
 ```typescript
-import { Auth, connectAuthEmulator } from "firebase/auth";
-import { connectFirestoreEmulator, Firestore } from "firebase/firestore";
-import { connectFunctionsEmulator, Functions } from "firebase/functions";
-import { connectStorageEmulator, FirebaseStorage } from "firebase/storage";
+import { authEmulator, databaseEmulator, firestoreEmulator, functionsEmulator, storageEmulator } from "ngfire";
 
 export const environment = {
   production: false,
@@ -39,18 +36,11 @@ export const environment = {
       authDomain: 'demo-firebase.firebaseapp.com',
       storageBucket: 'default-bucket',
     },
-    firestore: (firestore: Firestore) => {
-      connectFirestoreEmulator(firestore, 'localhost', 8000);
-    },
-    auth: (auth: Auth) => {
-      connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-    },
-    storage: (storage: FirebaseStorage) => {
-      connectStorageEmulator(storage, "localhost", 9199);
-    },
-    functions: (functions: Functions) => {
-      connectFunctionsEmulator(functions, "localhost", 5001);
-    }
+    firestore: firestoreEmulator('localhost', 8000),
+    auth: authEmulator('http://localhost:9099', { disableWarnings: true }),
+    storage: storageEmulator("localhost", 9199),
+    functions: functionsEmulator("localhost", 5001),
+    database: databaseEmulator("localhost", 9000),
   },
 }
 ```

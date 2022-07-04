@@ -1,31 +1,18 @@
-import { inject, Injectable, InjectionToken, Injector, NgZone, PLATFORM_ID } from "@angular/core";
+import { inject, Injectable, Injector, NgZone, PLATFORM_ID } from "@angular/core";
 import { isPlatformServer } from "@angular/common";
 import { doc, getDoc, writeBatch, runTransaction } from "firebase/firestore";
-import { Auth, getAuth, UserCredential, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, signInAnonymously, signInWithPopup, signInWithCustomToken, AuthProvider, User, getAdditionalUserInfo } from "firebase/auth";
-import { getConfig } from "./config";
-import { FIRESTORE } from "./firestore";
+import { UserCredential, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, signInAnonymously, signInWithPopup, signInWithCustomToken, AuthProvider, User, getAdditionalUserInfo } from "firebase/auth";
 import type { WriteBatch, DocumentSnapshot, DocumentReference, UpdateData } from 'firebase/firestore';
-import { user, fromRef, shareWithDelay } from './operators';
-import { AtomicWrite, MetaDocument, UpdateCallback } from "./types";
-import { keepUnstableUntilFirst } from "./zone";
-import { toDate } from "./firestore/collection";
+import { user, fromRef, shareWithDelay } from '../operators';
+import { AtomicWrite, MetaDocument, UpdateCallback } from "../types";
+import { keepUnstableUntilFirst } from "../zone";
+import { toDate } from "../firestore/collection";
 import { filter, map, switchMap, shareReplay, tap } from "rxjs/operators";
 import { firstValueFrom, from, Observable, of } from "rxjs";
-import { FIREBASE_APP } from "./app";
+import { FIRE_AUTH } from "./tokens";
+import { FIRESTORE } from "../firestore";
 
 const exist = <T>(v?: T | null): v is T => v !== null && v !== undefined;
-
-export const FIRE_AUTH = new InjectionToken<Auth>('Fire auth instance', {
-  providedIn: 'root',
-  factory: () => {
-    const config = getConfig();
-    const app = inject(FIREBASE_APP);
-    const auth = getAuth(app);
-    if (config.auth) config.auth(auth);
-    return auth;
-  },
-});
-
 
 export interface AuthWriteOptions<Ctx = any> {
   write?: AtomicWrite;
