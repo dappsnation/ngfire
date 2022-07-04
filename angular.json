@@ -2,6 +2,7 @@
   "version": 1,
   "projects": {
     "ngfire": {
+      "$schema": "../../node_modules/nx/schemas/project-schema.json",
       "projectType": "library",
       "root": "libs/ngfire",
       "sourceRoot": "libs/ngfire/src",
@@ -34,7 +35,7 @@
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/libs/ngfire"],
           "options": {
-            "jestConfig": "libs/ngfire/jest.config.js",
+            "jestConfig": "libs/ngfire/jest.config.ts",
             "passWithNoTests": true
           }
         },
@@ -51,13 +52,14 @@
       "tags": []
     },
     "ngfire-schematics": {
+      "$schema": "../../../node_modules/nx/schemas/project-schema.json",
       "projectType": "library",
       "root": "libs/ngfire/schematics",
       "sourceRoot": "libs/ngfire/schematics",
       "prefix": "ngfire",
       "architect": {
         "build": {
-          "builder": "@nrwl/workspace:tsc",
+          "builder": "@nrwl/js:tsc",
           "options": {
             "outputPath": "dist/libs/ngfire/schematics",
             "tsConfig": "libs/ngfire/tsconfig.schematics.json",
@@ -80,6 +82,7 @@
       }
     },
     "playground": {
+      "$schema": "../../node_modules/nx/schemas/project-schema.json",
       "projectType": "application",
       "root": "apps/playground",
       "sourceRoot": "apps/playground/src",
@@ -167,7 +170,7 @@
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/apps/playground"],
           "options": {
-            "jestConfig": "apps/playground/jest.config.js",
+            "jestConfig": "apps/playground/jest.config.ts",
             "passWithNoTests": true
           }
         }
@@ -175,6 +178,7 @@
       "tags": []
     },
     "playground-e2e": {
+      "$schema": "../../node_modules/nx/schemas/project-schema.json",
       "root": "apps/playground-e2e",
       "sourceRoot": "apps/playground-e2e/src",
       "projectType": "application",
@@ -204,6 +208,7 @@
       "implicitDependencies": ["playground"]
     },
     "webworker": {
+      "$schema": "../../node_modules/nx/schemas/project-schema.json",
       "projectType": "library",
       "root": "libs/webworker",
       "sourceRoot": "libs/webworker/src",
@@ -235,7 +240,7 @@
           "builder": "@nrwl/jest:jest",
           "outputs": ["coverage/libs/webworker"],
           "options": {
-            "jestConfig": "libs/webworker/jest.config.js",
+            "jestConfig": "libs/webworker/jest.config.ts",
             "passWithNoTests": true
           }
         }
