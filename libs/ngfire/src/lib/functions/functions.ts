@@ -1,19 +1,7 @@
-import { inject, Injectable, InjectFlags, InjectionToken, Injector } from "@angular/core";
-import { getConfig, REGION_OR_DOMAIN } from "./config";
-import { getFunctions, Functions, httpsCallable, HttpsCallable, HttpsCallableOptions } from "firebase/functions";
-import { FIREBASE_APP } from "./app";
+import { inject, Injectable, Injector } from "@angular/core";
+import { httpsCallable, HttpsCallable, HttpsCallableOptions } from "firebase/functions";
+import { CLOUD_FUNCTIONS } from "./tokens";
 
-export const CLOUD_FUNCTIONS = new InjectionToken<Functions>('Firebase cloud functions', {
-  providedIn: 'root',
-  factory: () => {
-    const config = getConfig();
-    const regionOrDomain = inject(REGION_OR_DOMAIN, InjectFlags.Optional);
-    const app = inject(FIREBASE_APP);
-    const functions = getFunctions(app, regionOrDomain ?? undefined);
-    if (config.functions) config.functions(functions);
-    return functions;
-  },
-});
 
 @Injectable({ providedIn: 'root' })
 export class CallableFunctions {

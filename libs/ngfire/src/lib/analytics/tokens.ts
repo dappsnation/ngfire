@@ -10,8 +10,10 @@ export const FIRE_ANALYTICS = new InjectionToken<Analytics>('Firebase Analytics 
     const config = getConfig();
     const settings = inject(ANALYTICS_SETTINGS, InjectFlags.Optional);
     const app = inject(FIREBASE_APP);
-    const analytics = initializeAnalytics(app, settings ?? {});
-    if (config.analytics) config.analytics(analytics);
-    return analytics;
+    if (config.analytics) {
+      return config.analytics(app, settings ?? {});
+    } else {
+      return initializeAnalytics(app, settings ?? {});
+    }
   },
 });

@@ -1,26 +1,31 @@
 import { inject, InjectionToken } from "@angular/core";
-import type { Functions } from "firebase/functions";
-import type { FirebaseStorage } from "firebase/storage";
-import type { FirebaseOptions } from 'firebase/app';
-import type { Auth } from "firebase/auth";
-import type { Firestore, FirestoreSettings } from 'firebase/firestore';
-import type { Database } from "firebase/database";
-import type { Analytics, AnalyticsSettings } from "firebase/analytics";
+import type { Functions, getFunctions } from "firebase/functions";
+import type { FirebaseStorage, getStorage } from "firebase/storage";
+import type { FirebaseApp, FirebaseAppSettings, FirebaseOptions, initializeApp } from 'firebase/app';
+import type { Auth, Dependencies, initializeAuth } from "firebase/auth";
+import type { Firestore, FirestoreSettings, initializeFirestore } from 'firebase/firestore';
+import type { Database, getDatabase } from "firebase/database";
+import type { Analytics, AnalyticsSettings, initializeAnalytics } from "firebase/analytics";
 
 interface FirebaseConfig {
   options: FirebaseOptions,
-  firestore?: (firestore: Firestore) => void,
-  auth?: (auth: Auth) => void,
-  storage?: (storage: FirebaseStorage) => void,
-  functions?: (functions: Functions) => void,
-  database?: (db: Database) => void,
-  analytics?: (analytics: Analytics) => void,
+  app?: (...params: Parameters<typeof initializeApp>) => FirebaseApp,
+  firestore?: (...params: Parameters<typeof initializeFirestore>) => Firestore,
+  auth?: (...params: Parameters<typeof initializeAuth>) => Auth,
+  storage?: (...params: Parameters<typeof getStorage>) => FirebaseStorage,
+  functions?: (...params: Parameters<typeof getFunctions>) => Functions,
+  database?: (...params: Parameters<typeof getDatabase>) => Database,
+  analytics?: (...params: Parameters<typeof initializeAnalytics>) => Analytics,
 }
 
+export const FIREBASE_APP_SETTINGS = new InjectionToken<FirebaseAppSettings>('FirebaseApp Configuration');
 export const FIREBASE_CONFIG = new InjectionToken<FirebaseConfig>('Firebase Config');
 export const REGION_OR_DOMAIN = new InjectionToken<string>('Firebase cloud functions region or domain');
 export const FIRESTORE_SETTINGS = new InjectionToken<FirestoreSettings>('Firestore settings');
 export const ANALYTICS_SETTINGS = new InjectionToken<AnalyticsSettings>('Analytics settings');
+export const STORAGE_BUCKET = new InjectionToken<string>('The gs:// url to your Firebase Storage Bucket.');
+export const DB_URL = new InjectionToken<string>('The URL of the Realtime Database instance to connect to');
+export const AUTH_DEPS = new InjectionToken<Dependencies>('The dependencies that can be used to initialize an Auth instance.');
 
 export function getConfig() {
   try {

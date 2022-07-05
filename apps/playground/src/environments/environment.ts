@@ -2,11 +2,7 @@
 // `ng build --prod` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 
-import { Firestore, connectFirestoreEmulator } from "firebase/firestore";
-import { Auth, connectAuthEmulator } from "firebase/auth";
-import { FirebaseStorage, connectStorageEmulator } from "firebase/storage";
-import { Functions, connectFunctionsEmulator } from "firebase/functions";
-import { Database, connectDatabaseEmulator } from "firebase/database";
+import { authEmulator, databaseEmulator, firestoreEmulator, functionsEmulator, storageEmulator } from "ngfire";
 
 export const environment = {
   production: false,
@@ -16,23 +12,12 @@ export const environment = {
       apiKey: 'abcd',
       authDomain: 'demo-firebase.firebaseapp.com',
       storageBucket: 'default-bucket',
-      
     },
-    firestore: (firestore: Firestore) => {
-      connectFirestoreEmulator(firestore, 'localhost', 8000);
-    },
-    auth: (auth: Auth) => {
-      connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-    },
-    storage: (storage: FirebaseStorage) => {
-      connectStorageEmulator(storage, "localhost", 9199);
-    },
-    functions: (functions: Functions) => {
-      connectFunctionsEmulator(functions, "localhost", 5001);
-    },
-    database: (db: Database) => {
-      connectDatabaseEmulator(db, "localhost", 9000);
-    }
+    firestore: firestoreEmulator('localhost', 8000),
+    auth: authEmulator('http://localhost:9099', { disableWarnings: true }),
+    storage: storageEmulator("localhost", 9199),
+    functions: functionsEmulator("localhost", 5001),
+    database: databaseEmulator("localhost", 9000),
   },
   useEmulators: true
 };

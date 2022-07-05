@@ -9,6 +9,7 @@ export interface Flight {
 
 @Injectable({ providedIn: 'root' })
 export class FlightService extends FireCollection<Flight> {
+  override memorize = true;
   readonly path = 'flights';
   readonly idKey = 'id';
 }

@@ -1,5 +1,9 @@
 import type { FieldValue, Transaction, WriteBatch } from "firebase/firestore";
 
+/** Used to get all the arguments of the initilizers except first one */
+export type FirebaseParams<T extends (...args: any) => any> = T extends (arg0: any, ...args: infer P) => any ? P : never
+
+
 export type AtomicWrite = Transaction | WriteBatch;
 export interface WriteOptions {
   write?: AtomicWrite;
