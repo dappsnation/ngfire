@@ -8,3 +8,4 @@ export * from './lib/storage/index';
 export * from './lib/operators';
 export * from './lib/types';
 export * from './lib/config';
+export * from './lib/utils';
