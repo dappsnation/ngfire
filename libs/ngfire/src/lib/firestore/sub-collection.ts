@@ -8,14 +8,6 @@ import { isPlatformServer } from "@angular/common";
 import { keepUnstableUntilFirst } from "../zone";
 
 
-/** Get the params from a path */
-export function getPathParams(path: string) {
-  return path
-    .split('/')
-    .filter((segment) => segment.charAt(0) === ':')
-    .map((segment) => segment.substring(1));
-}
-
 export abstract class FireSubCollection<E> extends FireCollection<E> {
   abstract path: string;
   protected pathKey = 'path';
