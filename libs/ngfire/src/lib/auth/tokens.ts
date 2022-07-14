@@ -8,9 +8,9 @@ export const FIRE_AUTH = new InjectionToken<Auth>('Fire auth instance', {
   factory: () => {
     const config = getConfig();
     const app = inject(FIREBASE_APP);
-    const deps = inject(AUTH_DEPS, InjectFlags.Optional);
+    const deps = inject(AUTH_DEPS, InjectFlags.Optional) || undefined;
     if (config.auth) {
-      return config.auth(app ?? {});
+      return config.auth(app, deps);
     } else {
       return deps ? initializeAuth(app, deps) : getAuth(app);
     }
