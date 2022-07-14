@@ -1,5 +1,5 @@
 import { inject, InjectFlags, InjectionToken } from "@angular/core";
-import { Auth, initializeAuth } from "firebase/auth";
+import { Auth, getAuth, initializeAuth } from "firebase/auth";
 import { FIREBASE_APP } from "../app";
 import { AUTH_DEPS, getConfig } from "../config";
 
@@ -12,7 +12,7 @@ export const FIRE_AUTH = new InjectionToken<Auth>('Fire auth instance', {
     if (config.auth) {
       return config.auth(app ?? {});
     } else {
-      return initializeAuth(app, deps ?? {})
+      return deps ? initializeAuth(app, deps) : getAuth(app);
     }
   },
 });
