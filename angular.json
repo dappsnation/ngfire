@@ -44,7 +44,27 @@
           "options": {
             "lintFilePatterns": [
               "libs/ngfire/src/**/*.ts",
-              "libs/ngfire/src/**/*.html"
+              "libs/ngfire/src/**/*.html",
+              "libs/ngfire/tokens/**/*.ts",
+              "libs/ngfire/tokens/**/*.html",
+              "libs/ngfire/app/**/*.ts",
+              "libs/ngfire/app/**/*.html",
+              "libs/ngfire/firestore/**/*.ts",
+              "libs/ngfire/firestore/**/*.html",
+              "libs/ngfire/auth/**/*.ts",
+              "libs/ngfire/auth/**/*.html",
+              "libs/ngfire/core/**/*.ts",
+              "libs/ngfire/core/**/*.html",
+              "libs/ngfire/analytics/**/*.ts",
+              "libs/ngfire/analytics/**/*.html",
+              "libs/ngfire/database/**/*.ts",
+              "libs/ngfire/database/**/*.html",
+              "libs/ngfire/functions/**/*.ts",
+              "libs/ngfire/functions/**/*.html",
+              "libs/ngfire/storage/**/*.ts",
+              "libs/ngfire/storage/**/*.html",
+              "libs/ngfire/emulators/**/*.ts",
+              "libs/ngfire/emulators/**/*.html"
             ]
           }
         }
