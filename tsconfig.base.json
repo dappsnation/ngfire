@@ -20,7 +20,17 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@ngfire/webworker": ["libs/webworker/src/index.ts"],
-      "ngfire": ["libs/ngfire/src/index.ts"]
+      "ngfire": ["libs/ngfire/src/index.ts"],
+      "ngfire/analytics": ["libs/ngfire/analytics/src/index.ts"],
+      "ngfire/app": ["libs/ngfire/app/src/index.ts"],
+      "ngfire/auth": ["libs/ngfire/auth/src/index.ts"],
+      "ngfire/core": ["libs/ngfire/core/src/index.ts"],
+      "ngfire/database": ["libs/ngfire/database/src/index.ts"],
+      "ngfire/emulators": ["libs/ngfire/emulators/src/index.ts"],
+      "ngfire/firestore": ["libs/ngfire/firestore/src/index.ts"],
+      "ngfire/functions": ["libs/ngfire/functions/src/index.ts"],
+      "ngfire/storage": ["libs/ngfire/storage/src/index.ts"],
+      "ngfire/tokens": ["libs/ngfire/tokens/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
