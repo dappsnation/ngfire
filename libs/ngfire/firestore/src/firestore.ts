@@ -45,6 +45,10 @@ export class FirestoreService {
     }
   }
 
+  getState<E>(ref: DocumentReference<E>, delay?: number): DocumentSnapshot<E>
+  getState<E>(ref: CollectionReference<E>, delay?: number): QuerySnapshot<E>
+  getState<E>(ref: Query<E>, delay?: number): QuerySnapshot<E>
+  getState<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>): Snapshot<E> | undefined
   getState<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>): Snapshot<E> | undefined {
     if (isQuery(ref)) {
       for (const key of this.state.keys()) {
@@ -57,6 +61,10 @@ export class FirestoreService {
   }
 
   /** @internal Should only be used by FireCollection services */
+  fromMemory<E>(ref: DocumentReference<E>, delay?: number): Observable<DocumentSnapshot<E>>
+  fromMemory<E>(ref: CollectionReference<E>, delay?: number): Observable<QuerySnapshot<E>>
+  fromMemory<E>(ref: Query<E>, delay?: number): Observable<QuerySnapshot<E>>
+  fromMemory<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>, delay?: number): Observable<Snapshot<E>>
   fromMemory<E>(
     ref: DocumentReference<E> | CollectionReference<E> | Query<E>,
     delay?: number
