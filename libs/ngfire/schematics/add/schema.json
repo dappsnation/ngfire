@@ -14,11 +14,13 @@
     "firebaseProject": {
       "type": "string",
       "description": "The name of the firebase project (default is demo-project).",
-      "x-prompt": "Name of your firebase project (default is demo-project)"
+      "x-prompt": "Name of your firebase project (default is demo-project)",
+      "default": "demo-project"
     },
     "path": {
       "type": "string",
-      "description": "Optional path where to generate the files (default is the root workspace)"
+      "description": "Optional path where to generate the files (default is the root workspace)",
+      "default": "/"
     }
   },
   "required": []

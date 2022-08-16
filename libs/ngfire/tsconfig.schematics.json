@@ -1,4 +1,5 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "../../dist/out-tsc",
@@ -13,6 +14,7 @@
   },
   "include": [
     "schematics/index.ts",
+    "schematics/utils.ts",
     "schematics/*/index.ts",
   ]
 }
