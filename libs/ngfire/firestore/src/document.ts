@@ -44,11 +44,17 @@ export abstract class FireDocument<E extends DocumentData> {
   }
 
   protected useCache<T extends E>(ref: DocumentReference<T>): Observable<T | undefined> {    
-    if (!this.memorize) return fromRef(ref).pipe(switchMap(async snap => this.snapToData(snap)));
+    if (!this.memorize) {
+      return this.zone.runOutsideAngular(() => fromRef(ref)).pipe(
+        switchMap(async snap => this.snapToData(snap)),
+        keepUnstableUntilFirst(this.zone)
+      );
+    }
     const transfer = this.firestore.getTransfer(ref);
     const initial = this.firestore.getState(ref);
-    const snap$ = this.firestore.fromMemory<T>(ref, this.delayToUnsubscribe).pipe(
-      tap(snap => this.firestore.setState(ref, snap))
+    const snap$ = this.zone.runOutsideAngular(() => this.firestore.fromMemory<T>(ref, this.delayToUnsubscribe)).pipe(
+      tap(snap => this.firestore.setState(ref, snap)),
+      keepUnstableUntilFirst(this.zone)
     );
     if (transfer) return snap$.pipe(switchMap(async snap => this.snapToData(snap)), startWith(transfer));
     if (initial) return snap$.pipe(startWith(initial), switchMap(async snap => this.snapToData(snap)));

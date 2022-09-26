@@ -48,7 +48,7 @@ export const environment = {
 `environment.prod.ts` (use your project's config here) : 
 ```typescript
 export const environment = {
-  production: false,
+  production: true,
   firebase: {
     options: {
       apiKey: '******',
