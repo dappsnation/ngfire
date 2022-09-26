@@ -126,7 +126,7 @@ export abstract class FireDocument<E extends DocumentData> {
   }
 
   /** Clear cache and get the latest value into the cache */
-  public async reload<T extends E = E>(parameters?: Params): Promise<T | T[] | undefined> {
+  public async reload<T extends E = E>(parameters?: Params): Promise<T | undefined> {
     if (!this.memorize) return;
     const ref = this.getRef(parameters);
     this.clearCache(ref);
@@ -134,18 +134,18 @@ export abstract class FireDocument<E extends DocumentData> {
   }
 
   /** Get the last content from the app (if value has been cached, it won't do a server request) */
-  public async load<T extends E>(parameters?: Params): Promise<T | T[] | undefined> {
+  public async load<T extends E>(parameters?: Params): Promise<T | undefined> {
     return firstValueFrom(this.valueChanges(parameters));
   }
 
   /** Return the current value of the document from Firestore */
-  public async getValue<T extends E = E>(parameters?: Params): Promise<T | T[] | undefined> {
+  public async getValue<T extends E = E>(parameters?: Params): Promise<T | undefined> {
     const ref = this.getRef<T>(parameters);
     return this.getFromRef<T>(ref);
   }
 
   /** Listen to the changes of values of the document from Firestore */
-  public valueChanges<T extends E = E>(parameters?: Params): Observable<T | T[] | undefined> {
+  public valueChanges<T extends E = E>(parameters?: Params): Observable<T | undefined> {
     const ref = this.getRef<T>(parameters);
     return this.fromRef<T>(ref);
   }

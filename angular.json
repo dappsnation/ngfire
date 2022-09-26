@@ -85,21 +85,23 @@
             "tsConfig": "libs/ngfire/tsconfig.schematics.json",
             "main": "libs/ngfire/schematics/index.ts",
             "assets": [
-              "libs/ngfire/schematics/collection.json",
               {
-                "glob": "*/schema.json",
                 "input": "libs/ngfire/schematics",
+                "glob": "**/files/**/*",
                 "output": "/"
               },
               {
-                "glob": "**/files/{*,.*}",
                 "input": "libs/ngfire/schematics",
+                "glob": "**/*.json",
+                "ignore": [],
                 "output": "/"
               }
             ]
           }
         }
-      }
+      },
+      "tags": ["schematics"],
+      "implicitDependencies": ["ngfire"]
     },
     "playground": {
       "$schema": "../../node_modules/nx/schemas/project-schema.json",
