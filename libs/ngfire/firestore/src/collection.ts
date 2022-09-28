@@ -54,22 +54,21 @@ export abstract class FireCollection<E extends DocumentData> {
         keepUnstableUntilFirst(this.zone)
       );
     }
-    
-      if (!this.memorize) {
-        return this.zone.runOutsideAngular(() => fromRef(ref as Query<T>)).pipe(
-          map(snap => this.snapToData(snap)),
-          keepUnstableUntilFirst(this.zone)
-        );
-      }
-      const transfer = this.firestore.getTransfer(ref);
-      const initial = this.firestore.getState(ref);
-      const snap$ = this.zone.runOutsideAngular(() => this.firestore.fromMemory(ref, this.delayToUnsubscribe)).pipe(
-        tap(snap => this.firestore.setState(ref, snap)),
+    if (!this.memorize) {
+      return this.zone.runOutsideAngular(() => fromRef(ref as Query<T>)).pipe(
+        map(snap => this.snapToData(snap)),
         keepUnstableUntilFirst(this.zone)
       );
-      if (transfer) return snap$.pipe(map(snap => this.snapToData(snap)), startWith(transfer));
-      if (initial) return snap$.pipe(startWith(initial), map(snap => this.snapToData(snap)));
-      return snap$.pipe(map(snap => this.snapToData(snap)));
+    }
+    const transfer = this.firestore.getTransfer(ref);
+    const initial = this.firestore.getState(ref);
+    const snap$ = this.zone.runOutsideAngular(() => this.firestore.fromMemory(ref, this.delayToUnsubscribe)).pipe(
+      tap(snap => this.firestore.setState(ref, snap)),
+      keepUnstableUntilFirst(this.zone)
+    );
+    if (transfer) return snap$.pipe(map(snap => this.snapToData(snap)), startWith(transfer));
+    if (initial) return snap$.pipe(startWith(initial), map(snap => this.snapToData(snap)));
+    return snap$.pipe(map(snap => this.snapToData(snap)));
   }
 
   protected clearCache<T extends E>(refs: CollectionReference<T> | DocumentReference<T> | Query<T> | DocumentReference<T>[]) {
