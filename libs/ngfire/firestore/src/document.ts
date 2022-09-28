@@ -43,7 +43,14 @@ export abstract class FireDocument<E extends DocumentData> {
     return this.firestore.db;
   }
 
-  protected useCache<T extends E>(ref: DocumentReference<T>): Observable<T | undefined> {    
+  protected useCache<T extends E>(ref: DocumentReference<T>): Observable<T | undefined> {   
+    if (isPlatformServer(this.platformId)) {
+      return this.zone.runOutsideAngular(() => fromRef(ref)).pipe(
+        switchMap(async snap => this.snapToData(snap)),
+        tap(value => this.firestore.setTransfer(ref, value)),
+        keepUnstableUntilFirst(this.zone),
+      );
+    }
     if (!this.memorize) {
       return this.zone.runOutsideAngular(() => fromRef(ref)).pipe(
         switchMap(async snap => this.snapToData(snap)),
@@ -110,12 +117,6 @@ export abstract class FireDocument<E extends DocumentData> {
 
   /** Observable the content of reference(s)  */
   protected fromRef<T extends E = E>(ref: DocumentReference<T>): Observable<T | undefined> {
-    if (isPlatformServer(this.platformId)) {
-      return this.zone.runOutsideAngular(() => from(this.getFromRef(ref))).pipe(
-        tap(value => this.firestore.setTransfer(ref, value)),
-        keepUnstableUntilFirst(this.zone),
-      );
-    }
     return this.useCache(ref);
   }
 
