@@ -46,12 +46,25 @@ export abstract class FireCollection<E extends DocumentData> {
   protected useCache<T extends E>(ref: DocumentReference<T>): Observable<T>
   protected useCache<T extends E>(ref: Query<T>): Observable<T[]>
   protected useCache<T extends E>(ref: DocumentReference<T> | Query<T>): Observable<T | T[]>   
-  protected useCache<T extends E>(ref: DocumentReference<T> | Query<T>): Observable<T | T[]> {    
-    if (!this.memorize) return fromRef(ref as Query<T>).pipe(map(snap => this.snapToData(snap)));
+  protected useCache<T extends E>(ref: DocumentReference<T> | Query<T>): Observable<T | T[]> {
+    if (isPlatformServer(this.platformId)) {
+      return this.zone.runOutsideAngular(() => fromRef(ref as Query<T>)).pipe(
+        map(snap => this.snapToData(snap)),
+        tap(value => this.firestore.setTransfer(ref, value)),
+        keepUnstableUntilFirst(this.zone)
+      );
+    }
+    if (!this.memorize) {
+      return this.zone.runOutsideAngular(() => fromRef(ref as Query<T>)).pipe(
+        map(snap => this.snapToData(snap)),
+        keepUnstableUntilFirst(this.zone)
+      );
+    }
     const transfer = this.firestore.getTransfer(ref);
     const initial = this.firestore.getState(ref);
-    const snap$ = this.firestore.fromMemory(ref, this.delayToUnsubscribe).pipe(
-      tap(snap => this.firestore.setState(ref, snap))
+    const snap$ = this.zone.runOutsideAngular(() => this.firestore.fromMemory(ref, this.delayToUnsubscribe)).pipe(
+      tap(snap => this.firestore.setState(ref, snap)),
+      keepUnstableUntilFirst(this.zone)
     );
     if (transfer) return snap$.pipe(map(snap => this.snapToData(snap)), startWith(transfer));
     if (initial) return snap$.pipe(startWith(initial), map(snap => this.snapToData(snap)));
@@ -132,12 +145,6 @@ export abstract class FireCollection<E extends DocumentData> {
   protected fromRef<T extends E = E>(
     ref: DocumentReference<T> | DocumentReference<T>[] | CollectionReference<T> | Query<T>
   ): Observable<undefined | T | T[]> {
-    if (isPlatformServer(this.platformId)) {
-      return this.zone.runOutsideAngular(() => from(this.getFromRef(ref))).pipe(
-        tap(value => this.firestore.setTransfer(ref, value)),
-        keepUnstableUntilFirst(this.zone),
-      );
-    }
     if (Array.isArray(ref)) {
       if (!ref.length) return of([]);
       const queries = ref.map(r => this.useCache(r));
