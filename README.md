@@ -79,7 +79,7 @@ import { environment } from '../environments/environment';
 export class AppModule {}
 ```
 
-## CollectionService
+## Collection Service
 You can create a new service per collection of Firestore:
 
 `flight.service.ts`: 
@@ -138,8 +138,6 @@ export class AppComponent {
   }
 }
 ```
-
-## API
 
 The service exposes an API to do most of common tasks: 
 - `valueChanges`: returns an `Observable`
@@ -254,4 +252,56 @@ service.update('id1', (doc, tx) => {
   }
   return { age: newAge };
 });
+```
+
+
+
+## Subcollection Service
+To access a subcollection you can extend the `FireSubcollection` service:
+```typescript
+@Injectable({ providedIn: 'root' })
+export class TicketService extends FireSubcollection<Ticket> {
+  readonly path = 'flights/:flightId/tickets';
+  // Field to be used for the document id (default: id)
+  override readonly idKey = 'ticketId';
+  // Field to be used for the full path reference (default: path)
+  override readonly pathKey = 'refPath';
+}
+```
+
+The service extends `FireCollection` with additional features:
+
+### Query Collection Group
+By default the subcollection will query the `collectionGroup`:
+```typescript
+// Query all documents inside a collection with name "tickets"
+service.valueChanges();
+service.valueChanges([where('status', '==', 'cancelled')]);
+```
+
+### Query a sub collection
+Add an object with the value of the params as last argument:
+```typescript
+service.valueChanges({ flightId: 'AZ301' });
+service.valueChanges('001', { flightId: 'AZ301' }); // 001 beeing the ticketId
+service.valueChanges([where('status', '==', 'cancelled')], { flightId: 'AZ301' });
+```
+
+### Write on a sub collection
+Add params as an field of the `WriteOption`:
+```typescript
+const params = { flightId: 'AZ301' };
+service.add(ticket, { params });
+service.update('001', ticket, { params }); // 001 beeing the ticketId
+service.remove('001', { params });
+```
+
+Example using the batch: 
+```typescript
+const write = service.batch();
+const params = { flightId: 'AZ301' };
+await service.add(ticket, { params, write });
+await service.update('001', ticket, { params, write });
+await service.remove('002', { params, write });
+write.commit();
 ```
