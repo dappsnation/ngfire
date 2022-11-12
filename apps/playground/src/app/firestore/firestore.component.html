@@ -5,7 +5,13 @@
 </ul>
 
 <form [formGroup]="form" (ngSubmit)="add()">
-  <input formControlName="number" />
-  <textarea formControlName="info"></textarea>
+  <label>
+    <span>Number</span>
+    <input type="number" formControlName="number" />
+  </label>
+  <label>
+    <span>Info</span>
+    <textarea formControlName="info"></textarea>
+  </label>
   <button>Submit</button>
 </form>

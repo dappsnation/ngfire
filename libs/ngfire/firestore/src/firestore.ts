@@ -7,13 +7,13 @@ import { fromRef } from "./operators";
 import { makeStateKey, TransferState } from "@angular/platform-browser";
 import { isPlatformBrowser, isPlatformServer } from "@angular/common";
 import { Observable } from "rxjs";
+import { stringifyQuery } from "./query";
 
 type Reference<E> = CollectionReference<E> | DocumentReference<E>;
 type Snapshot<E = DocumentData> = DocumentSnapshot<E> | QuerySnapshot<E>;
 
 @Injectable({ providedIn: 'root' })
 export class FirestoreService {
-  private memoryQuery: Map<Query, Observable<QuerySnapshot>> = new Map();
   private memoryRef: Record<string, Observable<Snapshot>> = {};
   private injector = inject(Injector);
   private plateformId = inject(PLATFORM_ID);
@@ -36,10 +36,8 @@ export class FirestoreService {
       this.state.set(ref.path, snap);
     } else if (isQuery(ref)) {
       (snap as QuerySnapshot<E>).forEach(doc => this.state.set(doc.ref.path, doc));
-      for (const key of this.state.keys()) {
-        if (typeof key !== 'string' && queryEqual(key, ref)) return;
-      }
-      this.state.set(ref, snap);
+      const key = stringifyQuery(ref);
+      this.state.set(key, snap);
     } else {
       this.state.set(ref.path, snap);
     }
@@ -51,12 +49,10 @@ export class FirestoreService {
   getState<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>): Snapshot<E> | undefined
   getState<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>): Snapshot<E> | undefined {
     if (isQuery(ref)) {
-      for (const key of this.state.keys()) {
-        if (typeof key !== 'string' && queryEqual(key, ref)) return this.state.get(key) as Snapshot<E>;
-      }
-      return;
+      const key = stringifyQuery(ref);
+      return this.state.get(key) as Snapshot<E>;
     } else {
-        return this.state.get(ref.path) as Snapshot<E>;
+      return this.state.get(ref.path) as Snapshot<E>;
     }
   }
 
@@ -69,27 +65,11 @@ export class FirestoreService {
     ref: DocumentReference<E> | CollectionReference<E> | Query<E>,
     delay?: number
   ): Observable<Snapshot<E>> {
-    if (!isQuery(ref)) {
-      const path = ref.path;
-      if (!this.memoryRef[path]) {
-        this.memoryRef[path] = fromRef(ref).pipe(shareWithDelay(delay));
-      }
-      return this.memoryRef[path] as Observable<Snapshot<E>>;
-    } else {
-      let existing: Observable<QuerySnapshot<E>> | null = null;
-      for (const [key, value] of this.memoryQuery.entries()) {
-        if (typeof key !== 'string' && queryEqual(key, ref)) {
-          existing = value as Observable<QuerySnapshot<E>>;
-          break;
-        }
-      }
-      if (existing) return existing;
-      // We remove delay because firestore cache can create side effect when active onSnapshot overlap
-      // TODO: check how to leverage native cache from JS sdk
-      const observable = fromRef(ref).pipe(shareWithDelay(delay));
-      this.memoryQuery.set(ref, observable);
-      return observable;
+    const key = isQuery(ref) ? stringifyQuery(ref) : ref.path;
+    if (!this.memoryRef[key]) {
+      this.memoryRef[key] = fromRef(ref as any).pipe(shareWithDelay(delay));
     }
+    return this.memoryRef[key] as Observable<Snapshot<E>>;
   }
 
   /**
@@ -102,11 +82,11 @@ export class FirestoreService {
   getTransfer<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>): E[] | E | undefined
   getTransfer<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>) {
     if (!this.transferState || !isPlatformBrowser(this.plateformId)) return;
-    if (isQuery(ref)) return;
-    const key = makeStateKey<E>(ref.path);
-    if (!this.transferState.hasKey(key)) return;
-    const value = this.transferState.get(key, undefined);
-    this.transferState.remove(key);
+    const key = isQuery(ref) ? stringifyQuery(ref) : ref.path;
+    const stateKey = makeStateKey<E>(key);
+    if (!this.transferState.hasKey(stateKey)) return;
+    const value = this.transferState.get(stateKey, undefined);
+    this.transferState.remove(stateKey);
     return value;
   }
 
@@ -120,8 +100,8 @@ export class FirestoreService {
     if (Array.isArray(ref) && Array.isArray(value)) {
       ref.forEach((reference, i) => this.setTransfer(reference, value[i]));
     } else if (!Array.isArray(ref)) {
-      if (isQuery(ref)) return;
-      this.transferState.set(makeStateKey<E>(ref.path), value);
+      const key = isQuery(ref) ? stringifyQuery(ref) : ref.path;
+      this.transferState.set(makeStateKey<E>(key), value);
     }
   }
 
@@ -137,18 +117,9 @@ export class FirestoreService {
       delete this.memoryRef[paths];
       this.state.delete(paths);
     } else {
-      for (const key of this.memoryQuery.keys()) {
-        if (queryEqual(key, paths)) {
-          this.memoryQuery.delete(paths);
-          break;
-        }
-      }
-      for (const key of this.state.keys()) {
-        if (typeof key !== 'string' && queryEqual(key, paths)) {
-          this.memoryQuery.delete(paths);
-          break;
-        }
-      }
+      const key = stringifyQuery(paths);
+      delete this.memoryRef[key];
+      this.state.delete(key);
     }
   }
 
