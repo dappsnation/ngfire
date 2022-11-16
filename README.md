@@ -159,6 +159,18 @@ service.valueChanges([ '1', '2' ]); // Two documents with the ids specified
 service.valueChanges([ where('key', '==', value) ]); // All documents where "key" is value
 ```
 
+⚠️⚠️ 
+
+#### About `where` & `new Date()`
+`ngfire` will memorize the query, but `new Date()` changes each time you trigger the query, so the query won't be memorized as expected.
+Examples : 
+- `where('createdAt', '<', new Date())`: Query will be trigger each time this is call.
+- `where('createdAt', '<', nextMinute(new Date()))`: Query is cached for the next minute.
+- `where('createdAt', '<', nextDay(new Date()))`: Query is cached for the current user session.
+
+⚠️⚠️
+
+
 ### load
 ```typescript
 service.load();

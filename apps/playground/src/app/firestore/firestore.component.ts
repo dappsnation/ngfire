@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
+import { limit, where } from 'firebase/firestore';
 import { FlightService } from './service';
 
 @Component({
@@ -12,11 +13,11 @@ export class FirestoreComponent {
     number: new FormControl(),
     info: new FormControl()
   });
-  flight$ = this.flightService.valueChanges();
+  flight$ = this.flightService.valueChanges([where('number', '<', 10), limit(3)]);
 
   constructor(private flightService: FlightService) {}
 
   add() {
-    this.flightService.add(this.form.value);
+    this.flightService.add({...this.form.value, createdAt: new Date()});
   }
 }
