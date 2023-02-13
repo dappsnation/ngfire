@@ -1,5 +1,5 @@
 import { inject, Injectable, InjectFlags, Injector, PLATFORM_ID } from "@angular/core";
-import { collection, doc, DocumentData, DocumentSnapshot, query, queryEqual, QuerySnapshot, runTransaction, writeBatch } from 'firebase/firestore';
+import { collection, doc, DocumentData, DocumentSnapshot, query, QuerySnapshot, runTransaction, writeBatch } from 'firebase/firestore';
 import type { Transaction, CollectionReference, DocumentReference, Query, QueryConstraint } from 'firebase/firestore';
 import { FIRESTORE } from "./tokens";
 import { shareWithDelay, assertCollection, assertPath, isCollectionRef, isDocPath, isQuery } from "ngfire/core";
@@ -101,7 +101,7 @@ export class FirestoreService {
       ref.forEach((reference, i) => this.setTransfer(reference, value[i]));
     } else if (!Array.isArray(ref)) {
       const key = isQuery(ref) ? stringifyQuery(ref) : ref.path;
-      this.transferState.set(makeStateKey<E>(key), value);
+      this.transferState.set(makeStateKey<E[]>(key), value);
     }
   }
 

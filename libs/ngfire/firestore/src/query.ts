@@ -6,7 +6,7 @@ import { exist } from 'ngfire/core';
 
 // Simplfied version of 
 // https://github.com/firebase/firebase-js-sdk/blob/master/packages/firestore/src/core/query.ts#L442
-export function stringifyQuery(query: Query) {
+export function stringifyQuery<T>(query: Query<T>) {
   if ('_query' in query) {
     const target = (query as any)['_query'] as Target & { limitType: string };
     return `${stringifyTarget(target)}|lt:${target.limitType})`;
