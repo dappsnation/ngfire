@@ -20,3 +20,35 @@ export function toDate<D>(target: D): D {
   }
   return target;
 }
+
+
+
+export function fromTransferStore<T>(target: T) {
+  if (typeof target !== 'object') return target;
+  for (const key in target) {
+    const value = target[key];
+    if (typeof value === 'string') {
+      const [dateKey, date] = value.split('::');
+      if (dateKey !== '__date__') continue;
+      target[key] = new Date(date) as any;
+      continue;
+    }
+    if (!value || typeof value !== 'object') continue;
+    fromTransferStore(value)
+  }
+  return target;
+}
+
+export function toTransferStore<T>(target: T) {
+  if (typeof target !== 'object') return target;
+  for (const key in target) {
+    const value = target[key];
+    if (!value || typeof value !== 'object') continue;
+    if (value instanceof Date) {
+      target[key] = `__date__::${value.toISOString()}` as any;
+      continue;
+    }
+    toTransferStore(value)
+  }
+  return target;
+}
