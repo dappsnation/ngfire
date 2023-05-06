@@ -22,33 +22,11 @@ export function toDate<D>(target: D): D {
 }
 
 
-
-export function fromTransferStore<T>(target: T) {
-  if (typeof target !== 'object') return target;
-  for (const key in target) {
-    const value = target[key];
-    if (typeof value === 'string') {
-      const [dateKey, date] = value.split('::');
-      if (dateKey !== '__date__') continue;
-      target[key] = new Date(date) as any;
-      continue;
-    }
-    if (!value || typeof value !== 'object') continue;
-    fromTransferStore(value)
+// Code from https://gist.github.com/davehax/2f32e7b09c3da3531601e6543fcff82e
+export function dateReviver(key: string, value: unknown) {
+  const dateFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,}|)Z$/;
+  if (typeof value === "string" && dateFormat.test(value)) {
+      return new Date(value);
   }
-  return target;
-}
-
-export function toTransferStore<T>(target: T) {
-  if (typeof target !== 'object') return target;
-  for (const key in target) {
-    const value = target[key];
-    if (!value || typeof value !== 'object') continue;
-    if (value instanceof Date) {
-      target[key] = `__date__::${value.toISOString()}` as any;
-      continue;
-    }
-    toTransferStore(value)
-  }
-  return target;
+  return value;
 }
