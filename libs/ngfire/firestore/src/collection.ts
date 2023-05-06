@@ -5,7 +5,7 @@ import type { DocumentData, CollectionReference, DocumentReference, QueryConstra
 import { fromRef } from './operators';
 import type { WriteOptions, UpdateCallback, MetaDocument, Params, FireEntity, DeepKeys } from 'ngfire/core';
 import { keepUnstableUntilFirst, isIdList, isNotUndefined, isPathRef, isQuery, pathWithParams } from 'ngfire/core';
-import { Observable, of, combineLatest, from, firstValueFrom } from 'rxjs';
+import { Observable, of, combineLatest, firstValueFrom } from 'rxjs';
 import { map, tap, startWith } from 'rxjs/operators';
 
 import { isPlatformServer } from '@angular/common';

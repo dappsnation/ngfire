@@ -20,3 +20,13 @@ export function toDate<D>(target: D): D {
   }
   return target;
 }
+
+
+// Code from https://gist.github.com/davehax/2f32e7b09c3da3531601e6543fcff82e
+export function dateReviver(key: string, value: unknown) {
+  const dateFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,}|)Z$/;
+  if (typeof value === "string" && dateFormat.test(value)) {
+      return new Date(value);
+  }
+  return value;
+}

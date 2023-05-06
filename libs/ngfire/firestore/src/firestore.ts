@@ -1,5 +1,5 @@
 import { inject, Injectable, InjectFlags, Injector, PLATFORM_ID } from "@angular/core";
-import { collection, doc, DocumentData, DocumentSnapshot, query, queryEqual, QuerySnapshot, runTransaction, writeBatch } from 'firebase/firestore';
+import { collection, doc, DocumentData, DocumentSnapshot, query, QuerySnapshot, runTransaction, writeBatch } from 'firebase/firestore';
 import type { Transaction, CollectionReference, DocumentReference, Query, QueryConstraint } from 'firebase/firestore';
 import { FIRESTORE } from "./tokens";
 import { shareWithDelay, assertCollection, assertPath, isCollectionRef, isDocPath, isQuery } from "ngfire/core";
@@ -8,6 +8,7 @@ import { makeStateKey, TransferState } from "@angular/platform-browser";
 import { isPlatformBrowser, isPlatformServer } from "@angular/common";
 import { Observable } from "rxjs";
 import { stringifyQuery } from "./query";
+import { dateReviver } from "./utils";
 
 type Reference<E> = CollectionReference<E> | DocumentReference<E>;
 type Snapshot<E = DocumentData> = DocumentSnapshot<E> | QuerySnapshot<E>;
@@ -83,11 +84,12 @@ export class FirestoreService {
   getTransfer<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>) {
     if (!this.transferState || !isPlatformBrowser(this.plateformId)) return;
     const key = isQuery(ref) ? stringifyQuery(ref) : ref.path;
-    const stateKey = makeStateKey<E>(key);
+    const stateKey = makeStateKey<string>(key);
     if (!this.transferState.hasKey(stateKey)) return;
     const value = this.transferState.get(stateKey, undefined);
     this.transferState.remove(stateKey);
-    return value;
+    if (!value) return;
+    return JSON.parse(value, dateReviver);
   }
 
   /** @internal Should only be used by FireCollection services */
@@ -101,7 +103,7 @@ export class FirestoreService {
       ref.forEach((reference, i) => this.setTransfer(reference, value[i]));
     } else if (!Array.isArray(ref)) {
       const key = isQuery(ref) ? stringifyQuery(ref) : ref.path;
-      this.transferState.set(makeStateKey<E>(key), value);
+      this.transferState.set(makeStateKey<string>(key), JSON.stringify(value));
     }
   }
 
