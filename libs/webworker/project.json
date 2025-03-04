@@ -6,10 +6,11 @@
   "prefix": "ngfire",
   "targets": {
     "build": {
-      "executor": "@nrwl/angular:package",
+      "executor": "@nx/angular:package",
       "options": {
         "tsConfig": "libs/webworker/tsconfig.lib.json",
-        "project": "libs/webworker/ng-package.json"
+        "project": "libs/webworker/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": true
       },
       "configurations": {
         "production": {
@@ -18,7 +19,7 @@
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "options": {
         "lintFilePatterns": [
           "libs/webworker/src/**/*.ts",
@@ -28,7 +29,7 @@
       "outputs": ["{options.outputFile}"]
     },
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/libs/webworker"],
       "options": {
         "jestConfig": "libs/webworker/jest.config.ts",

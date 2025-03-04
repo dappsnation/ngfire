@@ -1,6 +1,6 @@
 {
   "$schema": "../../../node_modules/@angular-devkit/schematics/collection-schema.json",
-  "extends": ["@nrwl/workspace"],
+  "extends": ["@nx/workspace"],
   "schematics": {
     "ng-add": {
       "factory": "./add/index#ngSchematics",

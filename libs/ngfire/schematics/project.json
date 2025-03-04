@@ -6,7 +6,7 @@
   "prefix": "ngfire",
   "targets": {
     "build": {
-      "executor": "@nrwl/js:tsc",
+      "executor": "@nx/js:tsc",
       "options": {
         "outputPath": "dist/libs/ngfire/schematics",
         "tsConfig": "libs/ngfire/tsconfig.schematics.json",
@@ -23,7 +23,8 @@
             "ignore": [],
             "output": "/"
           }
-        ]
+        ],
+        "updateBuildableProjectDepsInPackageJson": true
       }
     }
   },
