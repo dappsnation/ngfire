@@ -101,6 +101,70 @@
   "nxJsonPlugins": [],
   "fileMap": {
     "projectFileMap": {
+      "ngfire-schematics": [
+        {
+          "file": "libs/ngfire/schematics/add/files/.firebaserc.template",
+          "hash": "15590342095884167037"
+        },
+        {
+          "file": "libs/ngfire/schematics/add/files/firebase.json.template",
+          "hash": "13644482589291500555"
+        },
+        {
+          "file": "libs/ngfire/schematics/add/files/firestore.indexes.json",
+          "hash": "16438447666540798736"
+        },
+        {
+          "file": "libs/ngfire/schematics/add/files/firestore.rules",
+          "hash": "11274807714125656220"
+        },
+        {
+          "file": "libs/ngfire/schematics/add/files/storage.rules",
+          "hash": "14153130201255972901"
+        },
+        {
+          "file": "libs/ngfire/schematics/add/index.ts",
+          "hash": "128078088638225864",
+          "deps": [
+            "npm:@nrwl/devkit",
+            "npm:path"
+          ]
+        },
+        {
+          "file": "libs/ngfire/schematics/add/schema.d.ts",
+          "hash": "10431304255541980294"
+        },
+        {
+          "file": "libs/ngfire/schematics/add/schema.json",
+          "hash": "17894916957404208455"
+        },
+        {
+          "file": "libs/ngfire/schematics/add/utils.ts",
+          "hash": "9453271561842689739",
+          "deps": [
+            "npm:@nrwl/devkit"
+          ]
+        },
+        {
+          "file": "libs/ngfire/schematics/collection.json",
+          "hash": "2961333187102743444"
+        },
+        {
+          "file": "libs/ngfire/schematics/index.ts",
+          "hash": "1353104988962825472"
+        },
+        {
+          "file": "libs/ngfire/schematics/project.json",
+          "hash": "6424386803631220973"
+        },
+        {
+          "file": "libs/ngfire/schematics/utils.ts",
+          "hash": "15810330825589830733",
+          "deps": [
+            "npm:@angular-devkit/schematics"
+          ]
+        }
+      ],
       "playground": [
         {
           "file": "apps/playground/.eslintrc.json",
@@ -281,6 +345,55 @@
         {
           "file": "apps/playground/tsconfig.worker.json",
           "hash": "478328248804596551"
+        }
+      ],
+      "playground-e2e": [
+        {
+          "file": "apps/playground-e2e/.eslintrc.json",
+          "hash": "15523834149352881398"
+        },
+        {
+          "file": "apps/playground-e2e/cypress.json",
+          "hash": "15800725704415988696"
+        },
+        {
+          "file": "apps/playground-e2e/project.json",
+          "hash": "15697834199429706135"
+        },
+        {
+          "file": "apps/playground-e2e/src/fixtures/example.json",
+          "hash": "17341819486505642070"
+        },
+        {
+          "file": "apps/playground-e2e/src/integration/app.spec.ts",
+          "hash": "1387027350297010173"
+        },
+        {
+          "file": "apps/playground-e2e/src/plugins/index.js",
+          "hash": "1870053236038166983",
+          "deps": [
+            "npm:@nx/cypress/plugins/preprocessor"
+          ]
+        },
+        {
+          "file": "apps/playground-e2e/src/support/app.po.ts",
+          "hash": "5364106453863571025"
+        },
+        {
+          "file": "apps/playground-e2e/src/support/commands.ts",
+          "hash": "11031723810997510506"
+        },
+        {
+          "file": "apps/playground-e2e/src/support/index.ts",
+          "hash": "15928825062325902088"
+        },
+        {
+          "file": "apps/playground-e2e/tsconfig.e2e.json",
+          "hash": "16207512718177857315"
+        },
+        {
+          "file": "apps/playground-e2e/tsconfig.json",
+          "hash": "13003415357433107754"
         }
       ],
       "webworker": [
@@ -827,119 +940,6 @@
           "file": "libs/ngfire/tsconfig.spec.json",
           "hash": "11323427779069925343"
         }
-      ],
-      "playground-e2e": [
-        {
-          "file": "apps/playground-e2e/.eslintrc.json",
-          "hash": "15523834149352881398"
-        },
-        {
-          "file": "apps/playground-e2e/cypress.json",
-          "hash": "15800725704415988696"
-        },
-        {
-          "file": "apps/playground-e2e/project.json",
-          "hash": "15697834199429706135"
-        },
-        {
-          "file": "apps/playground-e2e/src/fixtures/example.json",
-          "hash": "17341819486505642070"
-        },
-        {
-          "file": "apps/playground-e2e/src/integration/app.spec.ts",
-          "hash": "1387027350297010173"
-        },
-        {
-          "file": "apps/playground-e2e/src/plugins/index.js",
-          "hash": "1870053236038166983",
-          "deps": [
-            "npm:@nx/cypress/plugins/preprocessor"
-          ]
-        },
-        {
-          "file": "apps/playground-e2e/src/support/app.po.ts",
-          "hash": "5364106453863571025"
-        },
-        {
-          "file": "apps/playground-e2e/src/support/commands.ts",
-          "hash": "11031723810997510506"
-        },
-        {
-          "file": "apps/playground-e2e/src/support/index.ts",
-          "hash": "15928825062325902088"
-        },
-        {
-          "file": "apps/playground-e2e/tsconfig.e2e.json",
-          "hash": "16207512718177857315"
-        },
-        {
-          "file": "apps/playground-e2e/tsconfig.json",
-          "hash": "13003415357433107754"
-        }
-      ],
-      "ngfire-schematics": [
-        {
-          "file": "libs/ngfire/schematics/add/files/.firebaserc.template",
-          "hash": "15590342095884167037"
-        },
-        {
-          "file": "libs/ngfire/schematics/add/files/firebase.json.template",
-          "hash": "13644482589291500555"
-        },
-        {
-          "file": "libs/ngfire/schematics/add/files/firestore.indexes.json",
-          "hash": "16438447666540798736"
-        },
-        {
-          "file": "libs/ngfire/schematics/add/files/firestore.rules",
-          "hash": "11274807714125656220"
-        },
-        {
-          "file": "libs/ngfire/schematics/add/files/storage.rules",
-          "hash": "14153130201255972901"
-        },
-        {
-          "file": "libs/ngfire/schematics/add/index.ts",
-          "hash": "128078088638225864",
-          "deps": [
-            "npm:@nrwl/devkit",
-            "npm:path"
-          ]
-        },
-        {
-          "file": "libs/ngfire/schematics/add/schema.d.ts",
-          "hash": "10431304255541980294"
-        },
-        {
-          "file": "libs/ngfire/schematics/add/schema.json",
-          "hash": "17894916957404208455"
-        },
-        {
-          "file": "libs/ngfire/schematics/add/utils.ts",
-          "hash": "9453271561842689739",
-          "deps": [
-            "npm:@nrwl/devkit"
-          ]
-        },
-        {
-          "file": "libs/ngfire/schematics/collection.json",
-          "hash": "2961333187102743444"
-        },
-        {
-          "file": "libs/ngfire/schematics/index.ts",
-          "hash": "1353104988962825472"
-        },
-        {
-          "file": "libs/ngfire/schematics/project.json",
-          "hash": "6424386803631220973"
-        },
-        {
-          "file": "libs/ngfire/schematics/utils.ts",
-          "hash": "15810330825589830733",
-          "deps": [
-            "npm:@angular-devkit/schematics"
-          ]
-        }
       ]
     },
     "nonProjectFiles": [
@@ -965,7 +965,7 @@
       },
       {
         "file": ".nx/workspace-data/nx_files.nxt",
-        "hash": "3470722053609387202"
+        "hash": "9366506123787861892"
       },
       {
         "file": ".pnp.js",
@@ -1041,7 +1041,7 @@
       },
       {
         "file": "pnpm-lock.yaml",
-        "hash": "7373093855776538391"
+        "hash": "2542560537101178012"
       },
       {
         "file": "storage.rules",
