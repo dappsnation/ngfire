@@ -9,6 +9,9 @@
   "affected": {
     "defaultBase": "master"
   },
+  "cli": {
+    "packageManager": "pnpm"
+  },
   "npmScope": "ngfire",
   "tasksRunnerOptions": {
     "default": {
