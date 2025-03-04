@@ -1,0 +1,32 @@
+{
+  "name": "ngfire-schematics",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/ngfire/schematics",
+  "prefix": "ngfire",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "options": {
+        "outputPath": "dist/libs/ngfire/schematics",
+        "tsConfig": "libs/ngfire/tsconfig.schematics.json",
+        "main": "libs/ngfire/schematics/index.ts",
+        "assets": [
+          {
+            "input": "libs/ngfire/schematics",
+            "glob": "**/files/**/*",
+            "output": "/"
+          },
+          {
+            "input": "libs/ngfire/schematics",
+            "glob": "**/*.json",
+            "ignore": [],
+            "output": "/"
+          }
+        ]
+      }
+    }
+  },
+  "tags": ["schematics"],
+  "implicitDependencies": ["ngfire"]
+}
