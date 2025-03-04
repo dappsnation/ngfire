@@ -105,7 +105,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
                     'virtual:2c8731ceea4ded99bae249ccd347b964a4d1fb8bdeeb53474e9ed16b53e70deb98af74435cdd642c4c2898289c8e34b69f204c848d03c6bd48b72b2b01d8bc66#npm:12.1.0',
                   ],
                   ['@nx/jest', 'npm:12.1.0'],
-                  ['@nx/linter', 'npm:12.1.0'],
+                  ['@nx/eslint', 'npm:12.1.0'],
                   ['@nrwl/tao', 'npm:12.1.0'],
                   [
                     '@nx/workspace',
@@ -8668,7 +8668,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
                   ],
                   ['@nrwl/devkit', 'npm:12.1.0'],
                   ['@nx/jest', 'npm:12.1.0'],
-                  ['@nx/linter', 'npm:12.1.0'],
+                  ['@nx/eslint', 'npm:12.1.0'],
                   ['@schematics/angular', 'npm:11.2.11'],
                   [
                     'jasmine-marbles',
@@ -8729,7 +8729,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
                     'virtual:d7eccfed01162029752231e3b66f4400b9f30d813bd6ba2d92f6b120eba0a2f47e852ac231f7a0301852000a13cf7854c916bc5b6c1edb51f604b2737c2cf076#npm:4.1.5',
                   ],
                   ['@nrwl/devkit', 'npm:12.1.0'],
-                  ['@nx/linter', 'npm:12.1.0'],
+                  ['@nx/eslint', 'npm:12.1.0'],
                   [
                     '@nx/workspace',
                     'virtual:d7eccfed01162029752231e3b66f4400b9f30d813bd6ba2d92f6b120eba0a2f47e852ac231f7a0301852000a13cf7854c916bc5b6c1edb51f604b2737c2cf076#npm:12.1.0',
@@ -8769,7 +8769,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
                     'virtual:d7eccfed01162029752231e3b66f4400b9f30d813bd6ba2d92f6b120eba0a2f47e852ac231f7a0301852000a13cf7854c916bc5b6c1edb51f604b2737c2cf076#npm:4.1.5',
                   ],
                   ['@nrwl/devkit', 'npm:12.1.0'],
-                  ['@nx/linter', 'npm:12.1.0'],
+                  ['@nx/eslint', 'npm:12.1.0'],
                   [
                     '@nx/workspace',
                     'virtual:d7eccfed01162029752231e3b66f4400b9f30d813bd6ba2d92f6b120eba0a2f47e852ac231f7a0301852000a13cf7854c916bc5b6c1edb51f604b2737c2cf076#npm:12.1.0',
@@ -8894,15 +8894,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           ],
         ],
         [
-          '@nx/linter',
+          '@nx/eslint',
           [
             [
               'npm:12.1.0',
               {
                 packageLocation:
-                  './.yarn/cache/@nrwl-linter-npm-12.1.0-c26b8d074b-1b2c03a045.zip/node_modules/@nx/linter/',
+                  './.yarn/cache/@nrwl-linter-npm-12.1.0-c26b8d074b-1b2c03a045.zip/node_modules/@nx/eslint/',
                 packageDependencies: [
-                  ['@nx/linter', 'npm:12.1.0'],
+                  ['@nx/eslint', 'npm:12.1.0'],
                   ['@nrwl/devkit', 'npm:12.1.0'],
                   ['glob', 'npm:7.1.4'],
                   ['minimatch', 'npm:3.0.4'],
@@ -8968,7 +8968,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
                   ['@nrwl/cli', 'npm:12.1.0'],
                   ['@nrwl/devkit', 'npm:12.1.0'],
                   ['@nx/jest', 'npm:12.1.0'],
-                  ['@nx/linter', 'npm:12.1.0'],
+                  ['@nx/eslint', 'npm:12.1.0'],
                   ['@types/prettier', null],
                   ['axios', 'npm:0.21.1'],
                   ['chalk', 'npm:4.1.0'],
@@ -9012,7 +9012,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
                   ['@nrwl/cli', 'npm:12.1.0'],
                   ['@nrwl/devkit', 'npm:12.1.0'],
                   ['@nx/jest', 'npm:12.1.0'],
-                  ['@nx/linter', 'npm:12.1.0'],
+                  ['@nx/eslint', 'npm:12.1.0'],
                   ['@types/prettier', null],
                   ['axios', 'npm:0.21.1'],
                   ['chalk', 'npm:4.1.0'],
@@ -23631,7 +23631,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
                     'virtual:2c8731ceea4ded99bae249ccd347b964a4d1fb8bdeeb53474e9ed16b53e70deb98af74435cdd642c4c2898289c8e34b69f204c848d03c6bd48b72b2b01d8bc66#npm:12.1.0',
                   ],
                   ['@nx/jest', 'npm:12.1.0'],
-                  ['@nx/linter', 'npm:12.1.0'],
+                  ['@nx/eslint', 'npm:12.1.0'],
                   ['@nrwl/tao', 'npm:12.1.0'],
                   [
                     '@nx/workspace',

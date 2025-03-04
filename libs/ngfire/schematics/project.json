@@ -23,8 +23,7 @@
             "ignore": [],
             "output": "/"
           }
-        ],
-        "updateBuildableProjectDepsInPackageJson": true
+        ]
       }
     }
   },

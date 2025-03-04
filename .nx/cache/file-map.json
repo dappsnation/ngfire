@@ -1,47 +1,55 @@
 {
   "version": "6.0",
-  "nxVersion": "16.9.1",
+  "nxVersion": "17.3.2",
   "deps": {
-    "@angular/animations": "16.2.12",
-    "@angular/common": "16.2.12",
-    "@angular/compiler": "16.2.12",
-    "@angular/core": "16.2.12",
-    "@angular/forms": "16.2.12",
-    "@angular/platform-browser": "16.2.12",
-    "@angular/platform-browser-dynamic": "16.2.12",
-    "@angular/router": "16.2.12",
+    "@angular/animations": "17.1.3",
+    "@angular/common": "17.1.3",
+    "@angular/compiler": "17.1.3",
+    "@angular/core": "17.1.3",
+    "@angular/forms": "17.1.3",
+    "@angular/platform-browser": "17.1.3",
+    "@angular/platform-browser-dynamic": "17.1.3",
+    "@angular/router": "17.1.3",
+    "@nx/angular": "17.3.2",
     "comlink": "^4.3.0",
     "firebase": "^9.8.4",
     "rxjs": "^7.5.5",
     "tslib": "^2.0.0",
-    "zone.js": "0.13.3",
-    "@nx/angular": "16.9.1",
-    "@angular-devkit/architect": "0.1602.9",
-    "@angular-devkit/build-angular": "16.2.9",
-    "@angular-devkit/core": "16.2.9",
-    "@angular-devkit/schematics": "16.2.9",
-    "@angular-eslint/eslint-plugin": "16.0.3",
-    "@angular-eslint/eslint-plugin-template": "16.0.3",
-    "@angular-eslint/template-parser": "16.0.3",
-    "@angular/cli": "~16.1.0",
-    "@angular/compiler-cli": "16.2.12",
-    "@angular/language-service": "16.2.12",
-    "@schematics/angular": "16.2.9",
+    "zone.js": "0.14.8",
+    "@angular-devkit/architect": "0.1701.4",
+    "@angular-devkit/build-angular": "17.1.4",
+    "@angular-devkit/core": "17.1.4",
+    "@angular-devkit/schematics": "17.1.4",
+    "@angular-eslint/eslint-plugin": "17.0.1",
+    "@angular-eslint/eslint-plugin-template": "17.0.1",
+    "@angular-eslint/template-parser": "17.0.1",
+    "@angular/cli": "~17.1.0",
+    "@angular/compiler-cli": "17.1.3",
+    "@angular/language-service": "17.1.3",
+    "@nx/cypress": "17.3.2",
+    "@nx/eslint": "17.3.2",
+    "@nx/eslint-plugin": "17.3.2",
+    "@nx/jest": "17.3.2",
+    "@nx/js": "17.3.2",
+    "@nx/node": "17.3.2",
+    "@nx/workspace": "17.3.2",
+    "@schematics/angular": "17.1.4",
     "@types/jest": "29.4.4",
-    "@types/node": "18.7.1",
-    "@typescript-eslint/eslint-plugin": "5.60.1",
-    "@typescript-eslint/parser": "5.60.1",
+    "@types/node": "^18.16.9",
+    "@typescript-eslint/eslint-plugin": "6.13.2",
+    "@typescript-eslint/parser": "6.13.2",
+    "autoprefixer": "^10.4.0",
     "cypress": "^6.0.1",
     "dotenv": "10.0.0",
-    "eslint": "8.46.0",
-    "eslint-config-prettier": "8.1.0",
+    "eslint": "8.48.0",
+    "eslint-config-prettier": "9.0.0",
     "eslint-plugin-cypress": "2.13.4",
     "firebase-tools": "^11.2.0",
     "jest": "29.4.3",
     "jest-environment-jsdom": "~28.1.1",
     "jest-preset-angular": "13.1.6",
-    "ng-packagr": "16.2.3",
-    "nx": "16.9.1",
+    "ng-packagr": "17.1.2",
+    "nx": "17.3.2",
     "postcss": "^8.3.9",
     "postcss-import": "14.1.0",
     "postcss-preset-env": "7.5.0",
@@ -50,14 +58,7 @@
     "source-map-explorer": "^2.5.2",
     "ts-jest": "29.1.5",
     "ts-node": "10.9.1",
-    "typescript": "5.1.6",
-    "@nx/workspace": "16.9.1",
-    "@nx/js": "16.9.1",
-    "@nx/cypress": "16.9.1",
-    "@nx/eslint-plugin": "16.9.1",
-    "@nx/linter": "16.9.1",
-    "@nx/jest": "16.9.1",
-    "@nx/node": "16.9.1"
+    "typescript": "5.3.3"
   },
   "pathMappings": {
     "@ngfire/webworker": [
@@ -100,10 +101,256 @@
   "nxJsonPlugins": [],
   "fileMap": {
     "projectFileMap": {
+      "playground": [
+        {
+          "file": "apps/playground/.eslintrc.json",
+          "hash": "16079068794028935421"
+        },
+        {
+          "file": "apps/playground/jest.config.ts",
+          "hash": "13668978495352725113"
+        },
+        {
+          "file": "apps/playground/project.json",
+          "hash": "11104790858578975048"
+        },
+        {
+          "file": "apps/playground/src/app/app.component.html",
+          "hash": "9324420547610744891"
+        },
+        {
+          "file": "apps/playground/src/app/app.component.scss",
+          "hash": "17059877830398192388"
+        },
+        {
+          "file": "apps/playground/src/app/app.component.ts",
+          "hash": "14117229954325513341",
+          "deps": [
+            "npm:@angular/core"
+          ]
+        },
+        {
+          "file": "apps/playground/src/app/app.module.ts",
+          "hash": "3274531923065917424",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@angular/forms",
+            "npm:@angular/platform-browser",
+            "npm:@angular/router",
+            "ngfire"
+          ]
+        },
+        {
+          "file": "apps/playground/src/app/database/database.component.html",
+          "hash": "16084836541320032904"
+        },
+        {
+          "file": "apps/playground/src/app/database/database.component.scss",
+          "hash": "3244421341483603138"
+        },
+        {
+          "file": "apps/playground/src/app/database/database.component.ts",
+          "hash": "1421866587558473723",
+          "deps": [
+            "npm:@angular/core",
+            "npm:rxjs"
+          ]
+        },
+        {
+          "file": "apps/playground/src/app/database/database.module.ts",
+          "hash": "16281561436285585373",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@angular/common",
+            "npm:@angular/forms",
+            "npm:@angular/router"
+          ]
+        },
+        {
+          "file": "apps/playground/src/app/database/list.ts",
+          "hash": "11759581461712585486",
+          "deps": [
+            "npm:@angular/core",
+            "ngfire"
+          ]
+        },
+        {
+          "file": "apps/playground/src/app/firestore/firestore.component.html",
+          "hash": "11847462464036406808"
+        },
+        {
+          "file": "apps/playground/src/app/firestore/firestore.component.scss",
+          "hash": "3740405324696391952"
+        },
+        {
+          "file": "apps/playground/src/app/firestore/firestore.component.ts",
+          "hash": "15346913061697187102",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@angular/forms",
+            "npm:firebase/firestore"
+          ]
+        },
+        {
+          "file": "apps/playground/src/app/firestore/firestore.module.ts",
+          "hash": "11753636445777623206",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@angular/common",
+            "npm:@angular/router",
+            "npm:@angular/forms"
+          ]
+        },
+        {
+          "file": "apps/playground/src/app/firestore/service.ts",
+          "hash": "14885755980583959684",
+          "deps": [
+            "npm:@angular/core",
+            "ngfire"
+          ]
+        },
+        {
+          "file": "apps/playground/src/app/worker/app.worker.ts",
+          "hash": "7035624100656989138"
+        },
+        {
+          "file": "apps/playground/src/assets/.gitkeep",
+          "hash": "3244421341483603138"
+        },
+        {
+          "file": "apps/playground/src/environments/environment.prod.ts",
+          "hash": "16380689990305840323"
+        },
+        {
+          "file": "apps/playground/src/environments/environment.ts",
+          "hash": "17375536400116453271",
+          "deps": [
+            "ngfire"
+          ]
+        },
+        {
+          "file": "apps/playground/src/favicon.ico",
+          "hash": "9303420814833116677"
+        },
+        {
+          "file": "apps/playground/src/index.html",
+          "hash": "79824917409293467"
+        },
+        {
+          "file": "apps/playground/src/main.ts",
+          "hash": "12530990079120336302",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@angular/platform-browser-dynamic"
+          ]
+        },
+        {
+          "file": "apps/playground/src/polyfills.ts",
+          "hash": "7830949019142423225",
+          "deps": [
+            "npm:zone.js"
+          ]
+        },
+        {
+          "file": "apps/playground/src/styles.scss",
+          "hash": "2917954890128038984"
+        },
+        {
+          "file": "apps/playground/src/test-setup.ts",
+          "hash": "9531801021999427605",
+          "deps": [
+            "npm:jest-preset-angular/setup-jest"
+          ]
+        },
+        {
+          "file": "apps/playground/tsconfig.app.json",
+          "hash": "12330123703493882305"
+        },
+        {
+          "file": "apps/playground/tsconfig.editor.json",
+          "hash": "5326258404141176585"
+        },
+        {
+          "file": "apps/playground/tsconfig.json",
+          "hash": "9165514696020917122"
+        },
+        {
+          "file": "apps/playground/tsconfig.spec.json",
+          "hash": "11323427779069925343"
+        },
+        {
+          "file": "apps/playground/tsconfig.worker.json",
+          "hash": "478328248804596551"
+        }
+      ],
+      "ngfire-schematics": [
+        {
+          "file": "libs/ngfire/schematics/add/files/.firebaserc.template",
+          "hash": "15590342095884167037"
+        },
+        {
+          "file": "libs/ngfire/schematics/add/files/firebase.json.template",
+          "hash": "13644482589291500555"
+        },
+        {
+          "file": "libs/ngfire/schematics/add/files/firestore.indexes.json",
+          "hash": "16438447666540798736"
+        },
+        {
+          "file": "libs/ngfire/schematics/add/files/firestore.rules",
+          "hash": "11274807714125656220"
+        },
+        {
+          "file": "libs/ngfire/schematics/add/files/storage.rules",
+          "hash": "14153130201255972901"
+        },
+        {
+          "file": "libs/ngfire/schematics/add/index.ts",
+          "hash": "128078088638225864",
+          "deps": [
+            "npm:@nrwl/devkit",
+            "npm:path"
+          ]
+        },
+        {
+          "file": "libs/ngfire/schematics/add/schema.d.ts",
+          "hash": "10431304255541980294"
+        },
+        {
+          "file": "libs/ngfire/schematics/add/schema.json",
+          "hash": "17894916957404208455"
+        },
+        {
+          "file": "libs/ngfire/schematics/add/utils.ts",
+          "hash": "9453271561842689739",
+          "deps": [
+            "npm:@nrwl/devkit"
+          ]
+        },
+        {
+          "file": "libs/ngfire/schematics/collection.json",
+          "hash": "2961333187102743444"
+        },
+        {
+          "file": "libs/ngfire/schematics/index.ts",
+          "hash": "1353104988962825472"
+        },
+        {
+          "file": "libs/ngfire/schematics/project.json",
+          "hash": "3447574173744743382"
+        },
+        {
+          "file": "libs/ngfire/schematics/utils.ts",
+          "hash": "15810330825589830733",
+          "deps": [
+            "npm:@angular-devkit/schematics"
+          ]
+        }
+      ],
       "webworker": [
         {
           "file": "libs/webworker/.eslintrc.json",
-          "hash": "16821233732982320"
+          "hash": "16079068794028935421"
         },
         {
           "file": "libs/webworker/README.md",
@@ -119,11 +366,11 @@
         },
         {
           "file": "libs/webworker/package.json",
-          "hash": "11684869509452558198"
+          "hash": "5300411974425315077"
         },
         {
           "file": "libs/webworker/project.json",
-          "hash": "3192515246069982674"
+          "hash": "5280421342592616158"
         },
         {
           "file": "libs/webworker/src/index.ts",
@@ -193,74 +440,59 @@
           "hash": "11323427779069925343"
         }
       ],
-      "ngfire-schematics": [
+      "playground-e2e": [
         {
-          "file": "libs/ngfire/schematics/add/files/.firebaserc.template",
-          "hash": "15590342095884167037"
+          "file": "apps/playground-e2e/.eslintrc.json",
+          "hash": "15523834149352881398"
         },
         {
-          "file": "libs/ngfire/schematics/add/files/firebase.json.template",
-          "hash": "13644482589291500555"
+          "file": "apps/playground-e2e/cypress.json",
+          "hash": "15800725704415988696"
         },
         {
-          "file": "libs/ngfire/schematics/add/files/firestore.indexes.json",
-          "hash": "16438447666540798736"
+          "file": "apps/playground-e2e/project.json",
+          "hash": "7096752955574735580"
         },
         {
-          "file": "libs/ngfire/schematics/add/files/firestore.rules",
-          "hash": "11274807714125656220"
+          "file": "apps/playground-e2e/src/fixtures/example.json",
+          "hash": "17341819486505642070"
         },
         {
-          "file": "libs/ngfire/schematics/add/files/storage.rules",
-          "hash": "14153130201255972901"
+          "file": "apps/playground-e2e/src/integration/app.spec.ts",
+          "hash": "1387027350297010173"
         },
         {
-          "file": "libs/ngfire/schematics/add/index.ts",
-          "hash": "128078088638225864",
+          "file": "apps/playground-e2e/src/plugins/index.js",
+          "hash": "1870053236038166983",
           "deps": [
-            "npm:@nrwl/devkit",
-            "npm:path"
+            "npm:@nx/cypress/plugins/preprocessor"
           ]
         },
         {
-          "file": "libs/ngfire/schematics/add/schema.d.ts",
-          "hash": "10431304255541980294"
+          "file": "apps/playground-e2e/src/support/app.po.ts",
+          "hash": "5364106453863571025"
         },
         {
-          "file": "libs/ngfire/schematics/add/schema.json",
-          "hash": "17894916957404208455"
+          "file": "apps/playground-e2e/src/support/commands.ts",
+          "hash": "11031723810997510506"
         },
         {
-          "file": "libs/ngfire/schematics/add/utils.ts",
-          "hash": "9453271561842689739",
-          "deps": [
-            "npm:@nrwl/devkit"
-          ]
+          "file": "apps/playground-e2e/src/support/index.ts",
+          "hash": "15928825062325902088"
         },
         {
-          "file": "libs/ngfire/schematics/collection.json",
-          "hash": "11228079120426718497"
+          "file": "apps/playground-e2e/tsconfig.e2e.json",
+          "hash": "16207512718177857315"
         },
         {
-          "file": "libs/ngfire/schematics/index.ts",
-          "hash": "1353104988962825472"
-        },
-        {
-          "file": "libs/ngfire/schematics/project.json",
-          "hash": "10139686214513884110"
-        },
-        {
-          "file": "libs/ngfire/schematics/utils.ts",
-          "hash": "15810330825589830733",
-          "deps": [
-            "npm:@angular-devkit/schematics"
-          ]
+          "file": "apps/playground-e2e/tsconfig.json",
+          "hash": "13003415357433107754"
         }
       ],
       "ngfire": [
         {
           "file": "libs/ngfire/.eslintrc.json",
-          "hash": "6612338891640726631"
+          "hash": "10632222540258021938"
         },
         {
           "file": "libs/ngfire/README.md",
@@ -613,11 +845,11 @@
         },
         {
           "file": "libs/ngfire/package.json",
-          "hash": "17132609656387267586"
+          "hash": "11451127574465357414"
         },
         {
           "file": "libs/ngfire/project.json",
-          "hash": "3806236814234767375"
+          "hash": "14206601528295850211"
         },
         {
           "file": "libs/ngfire/src/index.ts",
@@ -709,237 +941,6 @@
           "file": "libs/ngfire/tsconfig.spec.json",
           "hash": "11323427779069925343"
         }
-      ],
-      "playground": [
-        {
-          "file": "apps/playground/.eslintrc.json",
-          "hash": "16821233732982320"
-        },
-        {
-          "file": "apps/playground/jest.config.ts",
-          "hash": "13668978495352725113"
-        },
-        {
-          "file": "apps/playground/project.json",
-          "hash": "6762487564250698756"
-        },
-        {
-          "file": "apps/playground/src/app/app.component.html",
-          "hash": "9324420547610744891"
-        },
-        {
-          "file": "apps/playground/src/app/app.component.scss",
-          "hash": "17059877830398192388"
-        },
-        {
-          "file": "apps/playground/src/app/app.component.ts",
-          "hash": "14117229954325513341",
-          "deps": [
-            "npm:@angular/core"
-          ]
-        },
-        {
-          "file": "apps/playground/src/app/app.module.ts",
-          "hash": "3274531923065917424",
-          "deps": [
-            "npm:@angular/core",
-            "npm:@angular/forms",
-            "npm:@angular/platform-browser",
-            "npm:@angular/router",
-            "ngfire"
-          ]
-        },
-        {
-          "file": "apps/playground/src/app/database/database.component.html",
-          "hash": "16084836541320032904"
-        },
-        {
-          "file": "apps/playground/src/app/database/database.component.scss",
-          "hash": "3244421341483603138"
-        },
-        {
-          "file": "apps/playground/src/app/database/database.component.ts",
-          "hash": "1421866587558473723",
-          "deps": [
-            "npm:@angular/core",
-            "npm:rxjs"
-          ]
-        },
-        {
-          "file": "apps/playground/src/app/database/database.module.ts",
-          "hash": "16281561436285585373",
-          "deps": [
-            "npm:@angular/core",
-            "npm:@angular/common",
-            "npm:@angular/forms",
-            "npm:@angular/router"
-          ]
-        },
-        {
-          "file": "apps/playground/src/app/database/list.ts",
-          "hash": "11759581461712585486",
-          "deps": [
-            "npm:@angular/core",
-            "ngfire"
-          ]
-        },
-        {
-          "file": "apps/playground/src/app/firestore/firestore.component.html",
-          "hash": "11847462464036406808"
-        },
-        {
-          "file": "apps/playground/src/app/firestore/firestore.component.scss",
-          "hash": "3740405324696391952"
-        },
-        {
-          "file": "apps/playground/src/app/firestore/firestore.component.ts",
-          "hash": "15346913061697187102",
-          "deps": [
-            "npm:@angular/core",
-            "npm:@angular/forms",
-            "npm:firebase/firestore"
-          ]
-        },
-        {
-          "file": "apps/playground/src/app/firestore/firestore.module.ts",
-          "hash": "11753636445777623206",
-          "deps": [
-            "npm:@angular/core",
-            "npm:@angular/common",
-            "npm:@angular/router",
-            "npm:@angular/forms"
-          ]
-        },
-        {
-          "file": "apps/playground/src/app/firestore/service.ts",
-          "hash": "14885755980583959684",
-          "deps": [
-            "npm:@angular/core",
-            "ngfire"
-          ]
-        },
-        {
-          "file": "apps/playground/src/app/worker/app.worker.ts",
-          "hash": "7035624100656989138"
-        },
-        {
-          "file": "apps/playground/src/assets/.gitkeep",
-          "hash": "3244421341483603138"
-        },
-        {
-          "file": "apps/playground/src/environments/environment.prod.ts",
-          "hash": "16380689990305840323"
-        },
-        {
-          "file": "apps/playground/src/environments/environment.ts",
-          "hash": "17375536400116453271",
-          "deps": [
-            "ngfire"
-          ]
-        },
-        {
-          "file": "apps/playground/src/favicon.ico",
-          "hash": "9303420814833116677"
-        },
-        {
-          "file": "apps/playground/src/index.html",
-          "hash": "79824917409293467"
-        },
-        {
-          "file": "apps/playground/src/main.ts",
-          "hash": "12530990079120336302",
-          "deps": [
-            "npm:@angular/core",
-            "npm:@angular/platform-browser-dynamic"
-          ]
-        },
-        {
-          "file": "apps/playground/src/polyfills.ts",
-          "hash": "7830949019142423225",
-          "deps": [
-            "npm:zone.js"
-          ]
-        },
-        {
-          "file": "apps/playground/src/styles.scss",
-          "hash": "2917954890128038984"
-        },
-        {
-          "file": "apps/playground/src/test-setup.ts",
-          "hash": "9531801021999427605",
-          "deps": [
-            "npm:jest-preset-angular/setup-jest"
-          ]
-        },
-        {
-          "file": "apps/playground/tsconfig.app.json",
-          "hash": "12330123703493882305"
-        },
-        {
-          "file": "apps/playground/tsconfig.editor.json",
-          "hash": "5326258404141176585"
-        },
-        {
-          "file": "apps/playground/tsconfig.json",
-          "hash": "9165514696020917122"
-        },
-        {
-          "file": "apps/playground/tsconfig.spec.json",
-          "hash": "11323427779069925343"
-        },
-        {
-          "file": "apps/playground/tsconfig.worker.json",
-          "hash": "478328248804596551"
-        }
-      ],
-      "playground-e2e": [
-        {
-          "file": "apps/playground-e2e/.eslintrc.json",
-          "hash": "5570788962263802893"
-        },
-        {
-          "file": "apps/playground-e2e/cypress.json",
-          "hash": "15800725704415988696"
-        },
-        {
-          "file": "apps/playground-e2e/project.json",
-          "hash": "11527511201527739954"
-        },
-        {
-          "file": "apps/playground-e2e/src/fixtures/example.json",
-          "hash": "17341819486505642070"
-        },
-        {
-          "file": "apps/playground-e2e/src/integration/app.spec.ts",
-          "hash": "1387027350297010173"
-        },
-        {
-          "file": "apps/playground-e2e/src/plugins/index.js",
-          "hash": "958103339670479771",
-          "deps": [
-            "npm:@nx/cypress/plugins/preprocessor"
-          ]
-        },
-        {
-          "file": "apps/playground-e2e/src/support/app.po.ts",
-          "hash": "5364106453863571025"
-        },
-        {
-          "file": "apps/playground-e2e/src/support/commands.ts",
-          "hash": "11031723810997510506"
-        },
-        {
-          "file": "apps/playground-e2e/src/support/index.ts",
-          "hash": "15928825062325902088"
-        },
-        {
-          "file": "apps/playground-e2e/tsconfig.e2e.json",
-          "hash": "16207512718177857315"
-        },
-        {
-          "file": "apps/playground-e2e/tsconfig.json",
-          "hash": "13003415357433107754"
-        }
       ]
     },
     "nonProjectFiles": [
@@ -953,7 +954,7 @@
       },
       {
         "file": ".eslintrc.json",
-        "hash": "1202975058439976704"
+        "hash": "7881542898786061577"
       },
       {
         "file": ".firebaserc",
@@ -961,39 +962,19 @@
       },
       {
         "file": ".gitignore",
-        "hash": "3103229386483051700"
-      },
-      {
-        "file": ".nx/cache/file-map.json",
-        "hash": "8781542485830431167"
-      },
-      {
-        "file": ".nx/cache/lockfile.hash",
-        "hash": "4466288814600778762"
-      },
-      {
-        "file": ".nx/cache/nxdeps.json",
-        "hash": "12475845021108603466"
-      },
-      {
-        "file": ".nx/cache/parsed-lock-file.json",
-        "hash": "17652994679989306680"
-      },
-      {
-        "file": ".nx/cache/project-graph.json",
-        "hash": "1663751423251396578"
+        "hash": "4478474629269565646"
       },
       {
         "file": ".nx/workspace-data/nx_files.nxt",
-        "hash": "4125406000580203710"
+        "hash": "13570339776506885262"
       },
       {
         "file": ".pnp.js",
-        "hash": "2180161940387169553"
+        "hash": "4651325740591439614"
       },
       {
         "file": ".prettierignore",
-        "hash": "1324685984948235314"
+        "hash": "15146648731823155416"
       },
       {
         "file": ".prettierrc",
@@ -1017,7 +998,7 @@
       },
       {
         "file": "decorate-angular-cli.js",
-        "hash": "5797619241828206054"
+        "hash": "17833257574299604139"
       },
       {
         "file": "firebase.json",
@@ -1033,11 +1014,11 @@
       },
       {
         "file": "jest.config.ts",
-        "hash": "9924569069724985202"
+        "hash": "12211330594777216793"
       },
       {
         "file": "jest.preset.js",
-        "hash": "17443723868547557986"
+        "hash": "9084884494335109525"
       },
       {
         "file": "libs/.gitkeep",
@@ -1045,11 +1026,11 @@
       },
       {
         "file": "migrations.json",
-        "hash": "8455815744553806528"
+        "hash": "3735214564581968794"
       },
       {
         "file": "nx.json",
-        "hash": "277943004717814922"
+        "hash": "2855623844491883451"
       },
       {
         "file": "package-lock.json",
@@ -1057,19 +1038,15 @@
       },
       {
         "file": "package.json",
-        "hash": "14451235257647817194"
+        "hash": "13352081674802180558"
       },
       {
         "file": "pnpm-lock.yaml",
-        "hash": "7576255388407178388"
+        "hash": "16020513543619728527"
       },
       {
         "file": "storage.rules",
         "hash": "17867497650988510284"
-      },
-      {
-        "file": "tools/generators/.gitkeep",
-        "hash": "3244421341483603138"
       },
       {
         "file": "tools/tsconfig.tools.json",
