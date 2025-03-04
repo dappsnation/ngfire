@@ -3,9 +3,10 @@ import { ReplaySubject, switchMap } from 'rxjs';
 import { TokenList } from './list';
 
 @Component({
-  selector: 'ngfire-database',
-  templateUrl: './database.component.html',
-  styleUrls: ['./database.component.scss']
+    selector: 'ngfire-database',
+    templateUrl: './database.component.html',
+    styleUrls: ['./database.component.scss'],
+    standalone: false
 })
 export class DatabaseComponent {
   private selected = new ReplaySubject<string>();

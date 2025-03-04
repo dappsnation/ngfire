@@ -4,9 +4,10 @@ import { limit, where } from 'firebase/firestore';
 import { FlightService } from './service';
 
 @Component({
-  selector: 'ngfire-firestore',
-  templateUrl: './firestore.component.html',
-  styleUrls: ['./firestore.component.scss']
+    selector: 'ngfire-firestore',
+    templateUrl: './firestore.component.html',
+    styleUrls: ['./firestore.component.scss'],
+    standalone: false
 })
 export class FirestoreComponent {
   form = new FormGroup({
