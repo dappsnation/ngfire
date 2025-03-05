@@ -10,7 +10,7 @@ import type { Analytics, AnalyticsSettings, initializeAnalytics } from "firebase
 
 export interface FirebaseConfig {
   options: FirebaseOptions,
-  app?: (...params: Parameters<typeof initializeApp>) => FirebaseApp,
+  app?: (options: FirebaseOptions, config?: FirebaseAppSettings) => FirebaseApp,
   firestore?: (...params: Parameters<typeof initializeFirestore>) => Firestore,
   auth?: (...params: Parameters<typeof initializeAuth>) => Auth,
   storage?: (...params: Parameters<typeof getStorage>) => FirebaseStorage,

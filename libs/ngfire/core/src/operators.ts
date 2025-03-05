@@ -10,7 +10,7 @@ import {
 import { debounceTime, map, startWith, switchMap, tap, share } from 'rxjs/operators';
 
 
-export function shareWithDelay<T>(delay: number = 100) {
+export function shareWithDelay<T>(delay = 100) {
   return share<T>({
     connector: () => new ReplaySubject(1),
     resetOnRefCountZero: () => delay ? timer(delay) : of(true),

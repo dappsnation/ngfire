@@ -10,16 +10,25 @@ export function fromRef<T=DocumentData>(
   options: SnapshotListenOptions
 ): Observable<DocumentSnapshot<T>> | Observable<QuerySnapshot<T>>;
 export function fromRef<T=DocumentData>(
-  ref: any,
+  ref: DocumentReference<T> | Query<T>,
   options: SnapshotListenOptions = DEFAULT_OPTIONS
 ): Observable<any> {
   /* eslint-enable @typescript-eslint/no-explicit-any */
   return new Observable(subscriber => {
-    const unsubscribe = onSnapshot<T>(ref, options, {
-      next: subscriber.next.bind(subscriber), 
-      error: subscriber.error.bind(subscriber), 
-      complete: subscriber.complete.bind(subscriber),
-    });
-    return { unsubscribe };
+    if (ref.type === 'document') {
+      const unsubscribe = onSnapshot(ref, options, {
+        next: subscriber.next.bind(subscriber), 
+        error: subscriber.error.bind(subscriber), 
+        complete: subscriber.complete.bind(subscriber),
+      });
+      return { unsubscribe };
+    } else {
+      const unsubscribe = onSnapshot(ref, options, {
+        next: subscriber.next.bind(subscriber), 
+        error: subscriber.error.bind(subscriber), 
+        complete: subscriber.complete.bind(subscriber),
+      });
+      return { unsubscribe };
+    }
   });
 }

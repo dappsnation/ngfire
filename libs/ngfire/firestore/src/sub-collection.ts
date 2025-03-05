@@ -1,13 +1,13 @@
 import { isPlatformServer } from "@angular/common";
 import { collectionGroup, query } from "firebase/firestore";
-import type { QueryDocumentSnapshot, DocumentSnapshot, Query, QueryConstraint } from 'firebase/firestore';
+import type { QueryDocumentSnapshot, DocumentSnapshot, Query, QueryConstraint, DocumentData } from 'firebase/firestore';
 import { keepUnstableUntilFirst, isIdList, Params } from 'ngfire/core';
 import { FireCollection } from "./collection";
 import { toDate } from "./utils";
 import { firstValueFrom, from, Observable, of } from "rxjs";
 
 
-export abstract class FireSubCollection<E> extends FireCollection<E> {
+export abstract class FireSubCollection<E extends DocumentData> extends FireCollection<E> {
   abstract path: string;
   protected pathKey = 'path';
   

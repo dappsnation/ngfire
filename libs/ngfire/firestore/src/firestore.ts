@@ -1,5 +1,5 @@
 import { inject, Injectable, InjectFlags, Injector, PLATFORM_ID, makeStateKey, TransferState } from "@angular/core";
-import { collection, doc, DocumentData, DocumentSnapshot, query, queryEqual, QuerySnapshot, runTransaction, writeBatch } from 'firebase/firestore';
+import { collection, doc, DocumentData, DocumentSnapshot, query, QuerySnapshot, runTransaction, writeBatch } from 'firebase/firestore';
 import type { Transaction, CollectionReference, DocumentReference, Query, QueryConstraint } from 'firebase/firestore';
 import { FIRESTORE } from "./tokens";
 import { shareWithDelay, assertCollection, assertPath, isCollectionRef, isDocPath, isQuery } from "ngfire/core";
@@ -27,7 +27,7 @@ export class FirestoreService {
   }
 
   /** @internal Should only be used by FireCollection services */
-  setState<E>(
+  setState<E extends DocumentData>(
     ref: DocumentReference<E> | CollectionReference<E> | Query<E>,
     snap: Snapshot<E>
   ) {
@@ -43,11 +43,11 @@ export class FirestoreService {
     }
   }
 
-  getState<E>(ref: DocumentReference<E>, delay?: number): DocumentSnapshot<E>
-  getState<E>(ref: CollectionReference<E>, delay?: number): QuerySnapshot<E>
-  getState<E>(ref: Query<E>, delay?: number): QuerySnapshot<E>
-  getState<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>): Snapshot<E> | undefined
-  getState<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>): Snapshot<E> | undefined {
+  getState<E extends DocumentData>(ref: DocumentReference<E>, delay?: number): DocumentSnapshot<E>
+  getState<E extends DocumentData>(ref: CollectionReference<E>, delay?: number): QuerySnapshot<E>
+  getState<E extends DocumentData>(ref: Query<E>, delay?: number): QuerySnapshot<E>
+  getState<E extends DocumentData>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>): Snapshot<E> | undefined
+  getState<E extends DocumentData>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>): Snapshot<E> | undefined {
     if (isQuery(ref)) {
       const key = stringifyQuery(ref);
       return this.state.get(key) as Snapshot<E>;
@@ -57,11 +57,11 @@ export class FirestoreService {
   }
 
   /** @internal Should only be used by FireCollection services */
-  fromMemory<E>(ref: DocumentReference<E>, delay?: number): Observable<DocumentSnapshot<E>>
-  fromMemory<E>(ref: CollectionReference<E>, delay?: number): Observable<QuerySnapshot<E>>
-  fromMemory<E>(ref: Query<E>, delay?: number): Observable<QuerySnapshot<E>>
-  fromMemory<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>, delay?: number): Observable<Snapshot<E>>
-  fromMemory<E>(
+  fromMemory<E extends DocumentData>(ref: DocumentReference<E>, delay?: number): Observable<DocumentSnapshot<E>>
+  fromMemory<E extends DocumentData>(ref: CollectionReference<E>, delay?: number): Observable<QuerySnapshot<E>>
+  fromMemory<E extends DocumentData>(ref: Query<E>, delay?: number): Observable<QuerySnapshot<E>>
+  fromMemory<E extends DocumentData>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>, delay?: number): Observable<Snapshot<E>>
+  fromMemory<E extends DocumentData>(
     ref: DocumentReference<E> | CollectionReference<E> | Query<E>,
     delay?: number
   ): Observable<Snapshot<E>> {
@@ -77,10 +77,10 @@ export class FirestoreService {
    * Get the transfer state for a specific ref and put it in the memory state
    * Remove the reference to transfer state after first call
    */
-  getTransfer<E>(ref: DocumentReference<E>): E | undefined
-  getTransfer<E>(ref: CollectionReference<E> | Query<E>): E[] | undefined
-  getTransfer<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>): E[] | E | undefined
-  getTransfer<E>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>) {
+  getTransfer<E extends DocumentData>(ref: DocumentReference<E>): E | undefined
+  getTransfer<E extends DocumentData>(ref: CollectionReference<E> | Query<E>): E[] | undefined
+  getTransfer<E extends DocumentData>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>): E[] | E | undefined
+  getTransfer<E extends DocumentData>(ref: DocumentReference<E> | CollectionReference<E> | Query<E>) {
     if (!this.transferState || !isPlatformBrowser(this.plateformId)) return;
     const key = isQuery(ref) ? stringifyQuery(ref) : ref.path;
     const stateKey = makeStateKey<E>(key);
@@ -91,10 +91,10 @@ export class FirestoreService {
   }
 
   /** @internal Should only be used by FireCollection services */
-  setTransfer<E>(ref: DocumentReference<E>, value?: E): void
-  setTransfer<E>(ref: DocumentReference<E>[] | CollectionReference<E> | Query<E>, value?: E[]): void
-  setTransfer<E>(ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>, value?: E | E[]): void
-  setTransfer<E>(ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>, value?: E | E[]) {
+  setTransfer<E extends DocumentData>(ref: DocumentReference<E>, value?: E): void
+  setTransfer<E extends DocumentData>(ref: DocumentReference<E>[] | CollectionReference<E> | Query<E>, value?: E[]): void
+  setTransfer<E extends DocumentData>(ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>, value?: E | E[]): void
+  setTransfer<E extends DocumentData>(ref: DocumentReference<E> | DocumentReference<E>[] | CollectionReference<E> | Query<E>, value?: E | E[]) {
     if (!value) return;
     if (!this.transferState || !isPlatformServer(this.plateformId)) return;
     if (Array.isArray(ref) && Array.isArray(value)) {
@@ -124,11 +124,11 @@ export class FirestoreService {
   }
 
   /** Get the reference of the document, collection or query */
-  public getRef<E>(path: string): Reference<E>;
-  public getRef<E>(paths: string[]): DocumentReference<E>[];
-  public getRef<E>(path: string, constraints: QueryConstraint[]): Query<E>;
+  public getRef<E extends DocumentData>(path: string): Reference<E>;
+  public getRef<E extends DocumentData>(paths: string[]): DocumentReference<E>[];
+  public getRef<E extends DocumentData>(path: string, constraints: QueryConstraint[]): Query<E>;
   // overload used internally when looping over paths array
-  public getRef<E>(
+  public getRef<E extends DocumentData>(
     paths: string | string[],
     constraints?: QueryConstraint[],
   ): undefined | Query<E> | Query<E>[] | Reference<E> | DocumentReference<E>[] {

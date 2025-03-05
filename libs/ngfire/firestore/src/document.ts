@@ -5,7 +5,7 @@ import type { DocumentData, DocumentReference, QueryDocumentSnapshot, WriteBatch
 import { fromRef } from './operators';
 import type { WriteOptions, UpdateCallback, MetaDocument, Params, FireEntity, DeepKeys } from 'ngfire/core';
 import { keepUnstableUntilFirst, pathWithParams } from 'ngfire/core';
-import { Observable, from, firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { tap, startWith, switchMap } from 'rxjs/operators';
 
 import { isPlatformServer } from '@angular/common';

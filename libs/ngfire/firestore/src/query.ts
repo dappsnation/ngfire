@@ -1,12 +1,14 @@
-import type { Target, OrderBy, FieldFilter } from '@firebase/firestore/dist/firestore/src/core/target';
+import type { Target } from '@firebase/firestore/dist/firestore/src/core/target';
+import type { OrderBy } from '@firebase/firestore/dist/firestore/src/core/order_by';
+import type { FieldFilter } from '@firebase/firestore/dist/firestore/src/core/filter';
 import type { Value, ArrayValue, MapValue, Timestamp, LatLng } from '@firebase/firestore/dist/firestore/src/protos/firestore_proto_api';
-import type { Query } from 'firebase/firestore';
+import type { CollectionReference, DocumentData, Query } from 'firebase/firestore';
 import { exist } from 'ngfire/core';
 
 
 // Simplfied version of 
 // https://github.com/firebase/firebase-js-sdk/blob/master/packages/firestore/src/core/query.ts#L442
-export function stringifyQuery(query: Query) {
+export function stringifyQuery<E extends DocumentData = DocumentData>(query: Query<E> | CollectionReference<E>) {
   if ('_query' in query) {
     const target = (query as any)['_query'] as Target & { limitType: string };
     return `${stringifyTarget(target)}|lt:${target.limitType})`;

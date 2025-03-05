@@ -2,7 +2,7 @@ import { inject, Injectable, Injector, NgZone, PLATFORM_ID } from "@angular/core
 import { isPlatformServer } from "@angular/common";
 import { doc, getDoc, writeBatch, runTransaction } from "firebase/firestore";
 import { UserCredential, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, signInAnonymously, signInWithPopup, signInWithCustomToken, AuthProvider, User, getAdditionalUserInfo } from "firebase/auth";
-import type { WriteBatch, DocumentSnapshot, DocumentReference, UpdateData } from 'firebase/firestore';
+import type { WriteBatch, DocumentSnapshot, DocumentReference, UpdateData, DocumentData } from 'firebase/firestore';
 import { user } from './operators';
 import { fromRef, toDate, FIRESTORE } from 'ngfire/firestore';
 import { shareWithDelay, keepUnstableUntilFirst, AtomicWrite, MetaDocument, UpdateCallback } from 'ngfire/core';
@@ -52,7 +52,7 @@ export function isUpdateCallback<T>(
 
 
 @Injectable({ providedIn: 'root' })
-export abstract class BaseFireAuth<Profile, Roles = undefined> {
+export abstract class BaseFireAuth<Profile extends DocumentData, Roles extends Record<string, any> = Record<string, any>> {
   private memoProfile: Record<string, Observable<DocumentSnapshot<Profile>>> = {};
   private platformId = inject(PLATFORM_ID);
   protected getAuth = inject(FIRE_AUTH);
@@ -221,7 +221,7 @@ export abstract class BaseFireAuth<Profile, Roles = undefined> {
     }
     if (isUpdateCallback(profile)) {
       return runTransaction(this.db, async (tx) => {
-        const snapshot = (await tx.get(ref)) as DocumentSnapshot<Profile>;
+        const snapshot = await tx.get(ref);
         const doc = this.fromFirestore(snapshot);
         if (!doc) {
           throw new Error(`Could not find document at "${this.path}/${snapshot.id}"`);
@@ -272,7 +272,7 @@ export abstract class BaseFireAuth<Profile, Roles = undefined> {
 
 
 @Injectable({ providedIn: 'root' })
-export abstract class FireAuth<Profile, Roles = undefined> extends BaseFireAuth<Profile, Roles> {
+export abstract class FireAuth<Profile extends DocumentData, Roles extends Record<string, any> = Record<string, any>> extends BaseFireAuth<Profile, Roles> {
   protected abstract path: string | undefined;
 
   /**
