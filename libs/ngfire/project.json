@@ -24,7 +24,7 @@
     "publish": {
       "executor": "@nx/workspace:run-commands",
       "options": {
-        "command": "npm publish",
+        "command": "pnpm publish --access public",
         "cwd": "dist/libs/ngfire"
       }
     },
