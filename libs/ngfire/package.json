@@ -1,21 +1,16 @@
 {
   "name": "ngfire",
-  "version": "0.0.50",
+  "version": "0.1.0-beta",
   "homepage": "https://github.com/dappsnation/ngfire",
   "peerDependencies": {
     "@angular/common": ">18.0.0",
     "@angular/core": ">18.0.0",
     "@angular/platform-browser": ">18.0.0",
-    "@nx/devkit": ">13.0.0",
     "firebase": ">9.0.0",
     "rxjs": ">7.0.0"
   },
   "dependencies": {
     "tslib": "^2.3.0"
   },
-  "devDependencies": {},
-  "schematics": "./schematics/collection.json",
-  "ng-add": {
-    "save": "dependencies"
-  }
+  "devDependencies": {}
 }
