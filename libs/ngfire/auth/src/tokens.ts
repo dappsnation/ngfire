@@ -1,4 +1,4 @@
-import { inject, InjectFlags, InjectionToken } from "@angular/core";
+import { inject, InjectionToken } from "@angular/core";
 import { Auth, getAuth, initializeAuth } from "firebase/auth";
 import { FIREBASE_APP } from "ngfire/app";
 import { AUTH_DEPS, getConfig } from "ngfire/tokens";
@@ -8,7 +8,7 @@ export const FIRE_AUTH = new InjectionToken<Auth>('Fire auth instance', {
   factory: () => {
     const config = getConfig();
     const app = inject(FIREBASE_APP);
-    const deps = inject(AUTH_DEPS, InjectFlags.Optional) || undefined;
+    const deps = inject(AUTH_DEPS, { optional: true }) || undefined;
     if (config.auth) {
       return config.auth(app, deps);
     } else {

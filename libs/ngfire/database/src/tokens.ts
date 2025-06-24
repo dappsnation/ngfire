@@ -1,4 +1,4 @@
-import { inject, InjectFlags, InjectionToken } from "@angular/core";
+import { inject, InjectionToken } from "@angular/core";
 import { Database, getDatabase } from "firebase/database";
 import { FIREBASE_APP } from "ngfire/app";
 import { DB_URL, getConfig } from "ngfire/tokens";
@@ -9,7 +9,7 @@ export const DATABASE = new InjectionToken<Database>('Database instance', {
   factory: () => {
     const config = getConfig();
     const app = inject(FIREBASE_APP);
-    const url = inject(DB_URL, InjectFlags.Optional);
+    const url = inject(DB_URL, { optional: true });
     if (config.database) {
       return config.database(app, url ?? undefined)
     } else {

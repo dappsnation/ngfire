@@ -1,4 +1,4 @@
-import { inject, InjectFlags, InjectionToken } from "@angular/core";
+import { inject, InjectionToken } from "@angular/core";
 import { FirebaseApp, initializeApp } from "firebase/app";
 import { FIREBASE_APP_SETTINGS, FIREBASE_CONFIG } from "ngfire/tokens";
 
@@ -6,9 +6,9 @@ export const FIREBASE_APP = new InjectionToken<FirebaseApp>('Firebase applicatio
   providedIn: 'root',
   factory: () => {
     const config = inject(FIREBASE_CONFIG);
-    const settings = inject(FIREBASE_APP_SETTINGS, InjectFlags.Optional);
+    const settings = inject(FIREBASE_APP_SETTINGS, { optional: true });
     if (config.app) {
-      return config.app(config.options, settings ?? {});
+      return config.app();
     } else {
       return initializeApp(config.options, settings ?? {});
     }
