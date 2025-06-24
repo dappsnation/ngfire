@@ -45,7 +45,7 @@ export abstract class FireCollection<E extends DocumentData> {
 
   protected useCache<T extends E>(ref: DocumentReference<T>): Observable<T>
   protected useCache<T extends E>(ref: Query<T>): Observable<T[]>
-  protected useCache<T extends E>(ref: DocumentReference<T> | Query<T>): Observable<T | T[]>   
+  protected useCache<T extends E>(ref: DocumentReference<T> | Query<T>): Observable<T | T[]>
   protected useCache<T extends E>(ref: DocumentReference<T> | Query<T>): Observable<T | T[]> {
     if (isPlatformServer(this.platformId)) {
       return this.zone.runOutsideAngular(() => fromRef(ref as Query<T>)).pipe(
@@ -177,11 +177,11 @@ export abstract class FireCollection<E extends DocumentData> {
     if (!arguments.length) return this.firestore.getRef(this.path);
     // Id is undefined or null
     if (!ids) return undefined;
-    
+
     if (Array.isArray(ids)) {
       // List of ref
       if ((ids as any[]).every(isPathRef)) return this.firestore.getRef(ids as string[]);
-      
+
       const path = pathWithParams(this.path, parameters);
       // List of ids
       if (isIdList(ids)) return this.firestore.getRef(ids.map((id) => getDocPath(path, id)));
@@ -273,7 +273,7 @@ export abstract class FireCollection<E extends DocumentData> {
     const doesExist = async (doc: FireEntity<T>) => {
       const id: string | FieldValue | undefined = doc[this.idKey];
       if (typeof id !== 'string') return false;
-      const ref = this.getRef(id, options.params);
+      const ref: any = this.getRef(id, options.params);
       const snap = (options.write instanceof Transaction)
         ? await options.write?.get(ref)
         : await getDoc(ref);

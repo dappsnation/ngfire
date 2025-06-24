@@ -1,10 +1,9 @@
-import { inject, Injectable, InjectFlags, Injector, PLATFORM_ID } from "@angular/core";
+import { inject, Injectable, Injector, PLATFORM_ID, makeStateKey, TransferState } from "@angular/core";
 import { collection, doc, DocumentData, DocumentSnapshot, query, queryEqual, QuerySnapshot, runTransaction, writeBatch } from 'firebase/firestore';
 import type { Transaction, CollectionReference, DocumentReference, Query, QueryConstraint } from 'firebase/firestore';
 import { FIRESTORE } from "./tokens";
 import { shareWithDelay, assertCollection, assertPath, isCollectionRef, isDocPath, isQuery } from "ngfire/core";
 import { fromRef } from "./operators";
-import { makeStateKey, TransferState } from "@angular/platform-browser";
 import { isPlatformBrowser, isPlatformServer } from "@angular/common";
 import { Observable } from "rxjs";
 import { stringifyQuery } from "./query";
@@ -18,7 +17,7 @@ export class FirestoreService {
   private injector = inject(Injector);
   private plateformId = inject(PLATFORM_ID);
   /** Transfer state between server and  */
-  private transferState = inject(TransferState, InjectFlags.Optional);
+  private transferState = inject(TransferState, { optional: true });
   /** Cache based state for document */
   private state: Map<string | Query, Snapshot<unknown>> = new Map();
 
@@ -138,7 +137,7 @@ export class FirestoreService {
     if (Array.isArray(paths)) {
       return paths.map((path) => this.getRef<E>(path) as DocumentReference<E>);
     }
-    
+
     const hasContraints = Array.isArray(constraints);
     if (hasContraints) {
       assertPath(paths);

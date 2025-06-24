@@ -1,4 +1,4 @@
-import { inject, InjectFlags, InjectionToken } from "@angular/core";
+import { inject, InjectionToken } from "@angular/core";
 import { FirebaseStorage, getStorage } from "firebase/storage";
 import { FIREBASE_APP } from "ngfire/app";
 import { getConfig, STORAGE_BUCKET } from "ngfire/tokens";
@@ -9,7 +9,7 @@ export const FIRE_STORAGE = new InjectionToken<FirebaseStorage>('Firebase Storag
   factory: () => {
     const config = getConfig();
     const app = inject(FIREBASE_APP);
-    const bucket = inject(STORAGE_BUCKET, InjectFlags.Optional);
+    const bucket = inject(STORAGE_BUCKET, { optional: true });
     if (config.storage) {
       return config.storage(app, bucket ?? undefined);
     } else {

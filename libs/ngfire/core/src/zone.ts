@@ -3,7 +3,7 @@ import { SchedulerAction, SchedulerLike, queueScheduler, Subscription, Observabl
 import { observeOn, subscribeOn, tap } from "rxjs/operators";
 
 export class ɵZoneScheduler implements SchedulerLike {
-  constructor(private zone: Zone, private delegate: SchedulerLike = queueScheduler) {}
+  constructor(private zone: any, private delegate: SchedulerLike = queueScheduler) {}
 
   now() {
     return this.delegate.now();
@@ -29,9 +29,10 @@ export class ɵZoneScheduler implements SchedulerLike {
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 function noop() {}
+declare const Zone: any;
 
 class BlockUntilFirstOperator<T> implements Operator<T, T> {
-  private task: MacroTask | null = null;
+  private task: any = null;
 
   constructor(private zone: NgZone) {}
 

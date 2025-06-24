@@ -1,4 +1,4 @@
-import { inject, InjectFlags, InjectionToken } from "@angular/core";
+import { inject, InjectionToken } from "@angular/core";
 import { Firestore } from 'firebase/firestore';
 import { initializeFirestore } from "firebase/firestore";
 import { FIRESTORE_SETTINGS, getConfig } from "ngfire/tokens";
@@ -9,7 +9,7 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firestore instance', {
   providedIn: 'root',
   factory: () => {
     const config = getConfig();
-    const settings = inject(FIRESTORE_SETTINGS, InjectFlags.Optional);
+    const settings = inject(FIRESTORE_SETTINGS, { optional: true });
     const app = inject(FIREBASE_APP);
     if (config.firestore) {
       return config.firestore(app, settings ?? {});
